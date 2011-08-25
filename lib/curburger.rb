@@ -1,0 +1,3 @@
+module Curburger
+  # Your code goes here...
+end
