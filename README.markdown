@@ -8,12 +8,79 @@ using curb.
 Configurable features:
 
 + user-agent string settings
-+ connection timeout
-+ number of request attempts
-+ enable cookies and per-instance cookie jar
 + per-instance proxy configuration
-+ per-instance request count per time frame limitation
++ enable cookies per-instance
++ disable following of `Location:` in HTTP response header
++ request connection timeout
++ number of attempts for each request
++ per-instance request count per time period limitation
 
+## Usage
+
+    require 'curburger'
+
+### Instance options:
+
+    c = Curburger.new({:opt => val})
+
+  + `logging` - logging via `GLogg` (default `true`); with logging disabled
+  only errors/warnings are printed to `STDERR` 
+    + to completely disable logging leave `logging=true` and configure
+  `GLogg` verbosity to `GLogg::L_NIL`
+
+            GLogg.ini(nil, GLogg::L_NIL)
+  + `user_agent` - redefine instance `user_agent` string (default is set by
+  `curb`)
+  + `http_proxy` - set instance proxy url (default `nil`)
+  + `cookies` - enable cookies for this instance (default `false`)
+  + `follow_loc` - follow `Location:` in HTTP response header (default `true`)
+  + `req_timeout` - connection timeout for the requests (default `20`)
+    + this is the timeout for the connection to be established, not the timeout
+  for the whole request & reply
+  + `req_attempts` - number of attempts for the request (default `3`)
+  + `req_limit` - limit number of successful requests per `req_time_range`
+  time period (default `nil`)
+  + `req_time_range` - set requests limit time period in seconds
+
+### Available request methods:
+
+Two request methods are available for now: `get` and `post`.
+Both return arrays:
+
+  + in case of error return `[nil, error_message, time]`
+  + `[content_type, content, time]` otherwise
+    + `content` is recoded to `UTF-8` encoding for the most cases: for more information refer
+  to description in `Curburger::Recode#recode`
+    + `time` is request processing time formatted to `%.6f` seconds
+
+#### Reqeust options:
+
+Request methods support following optional parameters:
+
+  + `user`
+  + `password` - credentials for basic HTTP authentication (default `nil`)
+  + `timeout` - redefine instance `req_timeout` for this request
+  + `attempts` - redefine instance `req_attempts` for this request
+  + `encoding` - force encoding for the response body (default `nil`)
+  + optional _block_ given:
+    + relevant only in case of enabled request per time period limitation
+    + request method yields to execute the block before sleeping if the
+  reqeust limit was reached
+
+#### GET
+
+    result = c.get(url, {opts}) { optional block ... }
+
+#### POST
+
+    result = c.post(url, data, {opts}) { optional block ... }
+
+  + `data` parameter is expected in `String` scalar or `Hash` of
+  `{parameter => value}`
+    + posted direcly in case of `String` scalar
+    + url-encoded and assembled to scalar in case of `Hash`
+    + example: `'param1=value1&param2=value2'` or
+  `{:param1=>'value1', 'param2'=>'value2'}`
 
 ## License
 
