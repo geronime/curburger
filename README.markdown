@@ -13,6 +13,7 @@ Configurable features:
 + disable following of `Location:` in HTTP response header
 + request connection timeout
 + number of attempts for each request
++ random sleep time before retrying failed request (new in __0.0.2__)
 + per-instance request count per time period limitation
 
 ## Usage
@@ -38,6 +39,9 @@ Configurable features:
     + this is the timeout for the connection to be established, not the timeout
   for the whole request & reply
   + `req_attempts` - number of attempts for the request (default `3`)
+  + `req_retry_wait` - maximal count of seconds to sleep before retrying
+  failed request (defalut `0`, disabled)
+    + e.g. `10` = sleep random 1-10 seconds before retrying failed request
   + `req_limit` - limit number of successful requests per `req_time_range`
   time period (default `nil`)
   + `req_time_range` - set requests limit time period in seconds
@@ -49,8 +53,8 @@ Both return arrays:
 
   + in case of error return `[nil, error_message, time]`
   + `[content_type, content, time]` otherwise
-    + `content` is recoded to `UTF-8` encoding for the most cases: for more information refer
-  to description in `Curburger::Recode#recode`
+    + `content` is recoded to `UTF-8` encoding for the most cases: for more
+  information refer to description in `Curburger::Recode#recode`
     + `time` is request processing time formatted to `%.6f` seconds
 
 #### Reqeust options:
@@ -61,6 +65,7 @@ Request methods support following optional parameters:
   + `password` - credentials for basic HTTP authentication (default `nil`)
   + `timeout` - redefine instance `req_timeout` for this request
   + `attempts` - redefine instance `req_attempts` for this request
+  + `retry_wait` - redefine instance `req_retry_wait` for this request
   + `encoding` - force encoding for the response body (default `nil`)
   + optional _block_ given:
     + relevant only in case of enabled request per time period limitation

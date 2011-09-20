@@ -15,11 +15,12 @@ module Curburger
 		# with the new cookies.
 		# Available options and defaults in opts hash:
 		#   user
-		#   password - specify username/password for basic http authentication
-		#   timeout  - redefine Curburger::Client instance @req_timeout
-		#   attempts - redefine Curburger::Client instance @req_attempts
-		#   encoding - force encoding for the fetched page (nil)
-		#   data     - data to be sent in the request (empty string)
+		#   password   - specify username/password for basic http authentication
+		#   timeout    - redefine Curburger::Client instance @req_timeout
+		#   attempts   - redefine Curburger::Client instance @req_attempts
+		#   retry_wait - redefine Curburger::Client instance @req_retry_wait
+		#   encoding   - force encoding for the fetched page (nil)
+		#   data       - data to be sent in the request (empty string)
 		# In case of enabled request per time frame limitation the method yields to
 		# execute the optional block before sleeping if the @req_limit was reached.
 		def request method, url, opts={}, block=nil
@@ -34,7 +35,8 @@ module Curburger
 				@curb.http_auth_types = nil # reset
 			end
 			@curb.connect_timeout = opts[:timeout] ? opts[:timeout] : @req_timeout
-			opts[:attempts] = @req_attempts unless opts[:attempts]
+			opts[:attempts]   = @req_attempts   unless opts[:attempts]
+			opts[:retry_wait] = @req_retry_wait unless opts[:req_retry_wait]
 			while (attempt += 1) <= opts[:attempts]
 				req_limit_check block if @reqs # request limitation enabled
 				begin
@@ -63,6 +65,8 @@ module Curburger
 							"\n    %s %s\n    Attempt %u/%u failed: %s",
 							m.to_s.upcase, url, attempt, opts[:attempts], e.message))
 					last_err = e.message
+					sleep(1 + rand(opts[:retry_wait])) \
+							if opts[:retry_wait] > 0 && attempt < opts[:attempts]
 					next
 				end
 			end

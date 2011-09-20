@@ -20,14 +20,18 @@ module Curburger
 		#                    - this is the timeout for the connection to be made,
 		#                      not the timeout for the whole request and reply)
 		#   req_attempts   - number of attempts for the request (REQ_ATTEMPTS)
+		#   req_retry_wait - specify random upper bound to sleep between retrying
+		#                    failed request (default 0 = disabled)
 		#   req_limit      - limit number of successful requests per req_time_range
 		#                    time period (nil)
 		#   req_time_range - set request limit time period in seconds
 		def initialize o={}
 			self.class.hash_keys_to_sym o
 			@glogging = o[:logging].nil? ? true : o[:logging] ? true : false
-			@req_timeout  = o[:req_timeout] ? o[:req_timeout].to_i : REQ_CONN_TOUT
-			@req_attempts = o[:req_attempts] ? o[:req_attempts].to_i : REQ_ATTEMPTS
+			@req_timeout    = o[:req_timeout] ? o[:req_timeout].to_i : REQ_CONN_TOUT
+			@req_attempts   = o[:req_attempts] ? o[:req_attempts].to_i : REQ_ATTEMPTS
+			@req_retry_wait =
+				o[:req_retry_wait] ? o[:req_retry_wait].to_i : REQ_RETRY_WAIT
 			if o[:req_limit] && o[:req_time_range] # enable request limitation
 				@req_limit, @req_time_range = o[:req_limit].to_i, o[:req_time_range].to_i
 				@reqs = {:cnt => 0, :next_check => Time.now + @req_time_range}
@@ -56,9 +60,10 @@ module Curburger
 
 		private
 
-		# default connection timeout and attempt count
-		REQ_CONN_TOUT = 20
-		REQ_ATTEMPTS  = 3
+		# default connection timeout, attempt count, and retry wait
+		REQ_CONN_TOUT  = 20
+		REQ_ATTEMPTS   = 3
+		REQ_RETRY_WAIT = 0 # disabled
 
 		extend  Curburger::Recode
 		include Curburger::Request
