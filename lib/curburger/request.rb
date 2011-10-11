@@ -16,6 +16,7 @@ module Curburger
 		# Available options and defaults in opts hash:
 		#   user
 		#   password   - specify username/password for basic http authentication
+		#   ctimeout   - redefine Curburger::Client instance @req_ctimeout
 		#   timeout    - redefine Curburger::Client instance @req_timeout
 		#   attempts   - redefine Curburger::Client instance @req_attempts
 		#   retry_wait - redefine Curburger::Client instance @req_retry_wait
@@ -34,7 +35,8 @@ module Curburger
 			else
 				@curb.http_auth_types = nil # reset
 			end
-			@curb.connect_timeout = opts[:timeout] ? opts[:timeout] : @req_timeout
+			@curb.connect_timeout = opts[:ctimeout] ? opts[:ctimeout] : @req_ctimeout
+			@curb.timeout = opts[:timeout] ? opts[:timeout] : @req_timeout
 			opts[:attempts]   = @req_attempts   unless opts[:attempts]
 			opts[:retry_wait] = @req_retry_wait unless opts[:req_retry_wait]
 			while (attempt += 1) <= opts[:attempts]
@@ -55,9 +57,9 @@ module Curburger
 					@reqs[:cnt] += 1 if @reqs # increase request limitation counter
 					log? && GLogg.log_d4? && GLogg.log_d4(sprintf(                      #_
 							"Curburger::Request#request:\n    %s %s\n    " +                #_
-							'Done in %.6f secs (%u/%u attempt%s, %us connect timeout).',    #_
+							'Done in %.6f secs (%u/%u attempt%s, %us/%us connect/timeout).',#_
 							m.to_s.upcase, url, Time.now - t, attempt, opts[:attempts],     #_
-							attempt == 1 ? '' : 's', @curb.connect_timeout))
+							attempt == 1 ? '' : 's', @curb.connect_timeout, @curb.timeout))
 					return [ctype, content, sprintf('%.6f', Time.now - t)]
 				rescue Exception => e
 					log? && GLogg.log_i? && GLogg.log_i(sprintf(
@@ -72,10 +74,10 @@ module Curburger
 			end
 			if !log? || GLogg.log_e?
 				msg = sprintf "Curburger::Request#request:\n    %s %s\n    " +
-						'Failed in %.6f secs (%u attempt%s, %us connect timeout).' +
+						'Failed in %.6f secs (%u attempt%s, %us/%us connect/timeout).' +
 						"\n    Last error: %s", m.to_s.upcase, url,
 						Time.now - t, opts[:attempts], opts[:attempts] == 1 ? '' : 's',
-						@curb.connect_timeout, last_err
+						@curb.connect_timeout, @curb.timeout, last_err
 				log? ? GLogg.log_e(msg) : warn(msg)
 			end
 			return [nil, last_err, sprintf('%.6f', Time.now - t)]

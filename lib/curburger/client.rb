@@ -16,9 +16,10 @@ module Curburger
 		#   http_proxy     - setup http proxy for this instance (nil)
 		#   cookies        - enable cookie jar (false)
 		#   follow_loc     - follow Location in HTTP response header (true)
-		#   req_timeout    - connection timeout for the requests (REQ_CONN_TOUT)
+		#   req_ctimeout   - connection timeout for the requests (REQ_CONN_TOUT)
 		#                    - this is the timeout for the connection to be made,
 		#                      not the timeout for the whole request and reply)
+		#   req_timeout    - overall request timeout (REQ_TOUT)
 		#   req_attempts   - number of attempts for the request (REQ_ATTEMPTS)
 		#   req_retry_wait - specify random upper bound to sleep between retrying
 		#                    failed request (default 0 = disabled)
@@ -28,7 +29,8 @@ module Curburger
 		def initialize o={}
 			self.class.hash_keys_to_sym o
 			@glogging = o[:logging].nil? ? true : o[:logging] ? true : false
-			@req_timeout    = o[:req_timeout] ? o[:req_timeout].to_i : REQ_CONN_TOUT
+			@req_ctimeout   = o[:req_ctimeout] ? o[:req_ctimeout].to_i : REQ_CONN_TOUT
+			@req_timeout    = o[:req_timeout]  ? o[:req_timeout].to_i  : REQ_TOUT
 			@req_attempts   = o[:req_attempts] ? o[:req_attempts].to_i : REQ_ATTEMPTS
 			@req_retry_wait =
 				o[:req_retry_wait] ? o[:req_retry_wait].to_i : REQ_RETRY_WAIT
@@ -60,8 +62,9 @@ module Curburger
 
 		private
 
-		# default connection timeout, attempt count, and retry wait
-		REQ_CONN_TOUT  = 20
+		# default connection timeout, request timeout, attempt count, and retry wait
+		REQ_CONN_TOUT  = 10
+		REQ_TOUT       = 20
 		REQ_ATTEMPTS   = 3
 		REQ_RETRY_WAIT = 0 # disabled
 

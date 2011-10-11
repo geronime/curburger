@@ -12,6 +12,7 @@ Configurable features:
 + enable cookies per-instance
 + disable following of `Location:` in HTTP response header
 + request connection timeout
++ request timeout (new in __0.0.3__)
 + number of attempts for each request
 + random sleep time before retrying failed request (new in __0.0.2__)
 + per-instance request count per time period limitation
@@ -35,9 +36,10 @@ Configurable features:
   + `http_proxy` - set instance proxy url (default `nil`)
   + `cookies` - enable cookies for this instance (default `false`)
   + `follow_loc` - follow `Location:` in HTTP response header (default `true`)
-  + `req_timeout` - connection timeout for the requests (default `20`)
+  + `req_ctimeout` - connection timeout for the requests (default `10`)
     + this is the timeout for the connection to be established, not the timeout
   for the whole request & reply
+  + `req_timeout` - request timeout (default `20`)
   + `req_attempts` - number of attempts for the request (default `3`)
   + `req_retry_wait` - maximal count of seconds to sleep before retrying
   failed request (defalut `0`, disabled)
@@ -63,6 +65,7 @@ Request methods support following optional parameters:
 
   + `user`
   + `password` - credentials for basic HTTP authentication (default `nil`)
+  + `ctimeout` - redefine instance `req_ctimeout` for this request
   + `timeout` - redefine instance `req_timeout` for this request
   + `attempts` - redefine instance `req_attempts` for this request
   + `retry_wait` - redefine instance `req_retry_wait` for this request
