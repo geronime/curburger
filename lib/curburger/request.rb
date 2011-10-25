@@ -15,19 +15,21 @@ module Curburger
 		# with the new cookies.
 		# Available options and defaults in opts hash:
 		#   user
-		#   password   - specify username/password for basic http authentication
-		#   ctimeout   - redefine Curburger::Client instance @req_ctimeout
-		#   timeout    - redefine Curburger::Client instance @req_timeout
-		#   attempts   - redefine Curburger::Client instance @req_attempts
-		#   retry_wait - redefine Curburger::Client instance @req_retry_wait
-		#   encoding   - force encoding for the fetched page (nil)
-		#   data       - data to be sent in the request (empty string)
+		#   password     - specify username/password for basic http authentication
+		#   ctimeout     - redefine Curburger::Client instance @req_ctimeout
+		#   timeout      - redefine Curburger::Client instance @req_timeout
+		#   attempts     - redefine Curburger::Client instance @req_attempts
+		#   retry_wait   - redefine Curburger::Client instance @req_retry_wait
+		#   encoding     - force encoding for the fetched page (nil)
+		#   data         - data to be sent in the request (empty string)
+		#   content_type - specify custom content-type for POST request only
 		# In case of enabled request per time frame limitation the method yields to
 		# execute the optional block before sleeping if the @req_limit was reached.
 		def request method, url, opts={}, block=nil
 			m = method.downcase.to_sym
 			self.class.hash_keys_to_sym opts
 			t, attempt, last_err = Time.now, 0, nil
+			@curb.headers = {} # reset request headers (custom content-type in POST)
 			@curb.url = url
 			if opts[:user]
 				@curb.http_auth_types, @curb.username, @curb.password =
@@ -44,6 +46,8 @@ module Curburger
 				begin
 					case m
 						when :post then
+							opts[:content_type] &&
+								@curb.headers['Content-Type'] = opts[:content_type]
 							@curb.http_post(opts[:data])
 						else # GET
 							@curb.http_get

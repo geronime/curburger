@@ -89,6 +89,9 @@ Request methods support following optional parameters:
     + url-encoded and assembled to scalar in case of `Hash`
     + example: `'param1=value1&param2=value2'` or
   `{:param1=>'value1', 'param2'=>'value2'}`
+  + optional `content_type` option overrides default
+  `application/x-www-form-urlencoded` Content-Type HTTP POST header
+  (new in __0.0.4__)
 
 ## License
 
