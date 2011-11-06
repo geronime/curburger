@@ -21,6 +21,7 @@ module Curburger
 		#   attempts     - redefine Curburger::Client instance @req_attempts
 		#   retry_wait   - redefine Curburger::Client instance @req_retry_wait
 		#   encoding     - force encoding for the fetched page (nil)
+		#   force_ignore - use 'UTF-8//IGNORE' target encoding in iconv (false)
 		#   data         - data to be sent in the request (empty string)
 		#   content_type - specify custom content-type for POST request only
 		# In case of enabled request per time frame limitation the method yields to
@@ -57,7 +58,8 @@ module Curburger
 						raise Exception.new(status)
 					end
 					ctype, content = @curb.content_type, @curb.body_str
-					self.class.recode log?, ctype, content, opts[:encoding]
+					self.class.recode(log?, ctype, content,
+							*opts.values_at(:force_ignore, :encoding))
 					@reqs[:cnt] += 1 if @reqs # increase request limitation counter
 					log? && GLogg.log_d4? && GLogg.log_d4(sprintf(                      #_
 							"Curburger::Request#request:\n    %s %s\n    " +                #_

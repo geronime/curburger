@@ -26,7 +26,7 @@ Configurable features:
     c = Curburger.new({:opt => val})
 
   + `logging` - logging via `GLogg` (default `true`); with logging disabled
-  only errors/warnings are printed to `STDERR` 
+  only errors/warnings are printed to `STDERR`
     + to completely disable logging leave `logging=true` and configure
   `GLogg` verbosity to `GLogg::L_NIL`
 
@@ -70,6 +70,8 @@ Request methods support following optional parameters:
   + `attempts` - redefine instance `req_attempts` for this request
   + `retry_wait` - redefine instance `req_retry_wait` for this request
   + `encoding` - force encoding for the response body (default `nil`)
+  + `force_ignore` - use `UTF-8//IGNORE` target encoding in iconv (new in
+  __0.0.5__, default `false`)
   + optional _block_ given:
     + relevant only in case of enabled request per time period limitation
     + request method yields to execute the block before sleeping if the
@@ -92,6 +94,14 @@ Request methods support following optional parameters:
   + optional `content_type` option overrides default
   `application/x-www-form-urlencoded` Content-Type HTTP POST header
   (new in __0.0.4__)
+
+## Changelog:
+
++ __0.0.5__: `:force_ignore` option for requests
++ __0.0.4__: `:content_type` option for POST requests
++ __0.0.3__: request timeout added (previously only connect timeout)
++ __0.0.2__: option for random sleep time before retrying failed request
++ __0.0.1__: first revision
 
 ## License
 

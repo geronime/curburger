@@ -21,21 +21,21 @@ module Curburger
 		#        the real encoding if declared
 		#        (web-servers like apache may force incorrect encoding in header)
 		#    2c) attempt to get encoding from ctype, if any
-		#    2d) attempt to ask whether UTF-8 is valid, leave in ISO-8859-1 if not
-		def recode logging, ctype, content, encoding=nil
+		#    2d) in case of force_ignore do iconv conversion of the content into
+		#        'UTF-8//IGNORE' encoding
+		#    2e) attempt to ask whether UTF-8 is valid, leave in ISO-8859-1 if not
+		def recode logging, ctype, content, force_ignore=false, encoding=nil
 			if encoding                                             # 1)
 				begin
-					content.replace Iconv.iconv('UTF-8', encoding, content)[0]
+					to_enc = force_ignore ? 'UTF-8//IGNORE' : 'UTF-8'
+					content.replace Iconv.iconv(to_enc, encoding, content)[0]
 					true
 				rescue Exception => e
-					if logging
-						GLogg.log_w? && GLogg.log_w('Curburger::Recode#recode: ' +
-								"Failed to iconv page with forced encoding '#{encoding}':\n  " +
-								"#{e.class} - #{e.message}")
-					else
-						warn 'Curburger::Recode#recode: ' +
-								"Failed to iconv page with forced encoding '#{encoding}':\n  " +
+					if !logging || GLogg.log_w?
+						msg = 'Curburger::Recode#recode: Failed to iconv page from ' +
+								"forced encoding '#{encoding}' into '#{to_enc}:\n  " +
 								"#{e.class} - #{e.message}"
+						logging ? GLogg.log_w(msg) : warn(msg)
 					end
 					false
 				end
@@ -49,18 +49,31 @@ module Curburger
 				unless enc.nil?
 					enc = 'UTF-8' if enc =~ RGX[:enc_match_utf8]
 						# ruby does not understand 'utf8' encoding, ensure UTF-8
-					content.force_encoding enc
-					unless content.valid_encoding?
-						if logging
-							GLogg.log_w? && GLogg.log_w('Curburger::Recode#recode: ' +
-									"Detected encoding '#{enc}' invalid!")
-						else
-							warn "Curburger::Recode#recode: Detected encoding '#{enc}' invalid!"
+					if force_ignore                                     # 2d)
+						begin
+							content.replace Iconv.iconv('UTF-8//IGNORE', enc, content)[0]
+							return true
+						rescue => e # should not happen
+							if !logging || GLogg.log_e?
+								msg = 'Curburger::Recode#recode: Failed to iconv page from ' +
+										"'#{enc}' into 'UTF-8//IGNORE':\n  #{e.class} - #{e.message}"
+								logging ? GLogg.log_e(msg) : warn(msg)
+							end
+							enc = nil                                       # fall back to 2e)
 						end
-						enc = nil                                         # fall back to 2d)
+					else
+						content.force_encoding enc
+						unless content.valid_encoding?
+							if !logging || GLogg.log_w?
+								msg = 'Curburger::Recode#recode: ' +
+										"Detected encoding '#{enc}' invalid!"
+								logging ? GLogg.log_w(msg) : warn(msg)
+							end
+							enc = nil                                       # fall back to 2e)
+						end
 					end
 				end
-				if enc.nil?                                           # 2d)
+				if enc.nil?                                           # 2e)
 					content.force_encoding 'UTF-8'
 					if content.valid_encoding?
 						enc = 'UTF-8'
@@ -70,16 +83,14 @@ module Curburger
 					end
 				end
 				begin
-					content.replace Iconv.iconv('UTF-8', enc, content)[0]
+					to_enc = force_ignore ? 'UTF-8//IGNORE' : 'UTF-8'
+					content.replace Iconv.iconv(to_enc, enc, content)[0]
 					true
 				rescue Exception => e # should not happen
-					if logging
-						GLogg.log_e? && GLogg.log_e('Curburger::Recode#recode: ' +
-								"Failed to iconv page with detected encoding '#{enc}':\n  " +
-								"#{e.class} - #{e.message}")
-					else
-						warn 'Curburger::Recode#recode: Failed to iconv page ' +
-								"with detected encoding '#{enc}':\n  #{e.class} - #{e.message}"
+					if !logging || GLogg.log_e?
+						msg = 'Curburger::Recode#recode: Failed to iconv page from ' +
+								"'#{enc}' into '#{to_enc}':\n  #{e.class} - #{e.message}"
+						logging ? GLogg.log_e(msg) : warn(msg)
 					end
 					false
 				end
