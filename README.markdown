@@ -53,10 +53,12 @@ Configurable features:
 Two request methods are available for now: `get` and `post`.
 Both return arrays:
 
-  + in case of error return `[nil, error_message, time]`
-  + `[content_type, content, time]` otherwise
+  + in case of error return `[nil, error_message, last_url, time]`
+  + `[content_type, content, last_url, time]` otherwise
     + `content` is recoded to `UTF-8` encoding for the most cases: for more
   information refer to description in `Curburger::Recode#recode`
+    + `last_url` is last effective URL  of the request - to recognize
+  redirections (new in __0.0.6__)
     + `time` is request processing time formatted to `%.6f` seconds
 
 #### Reqeust options:
@@ -97,6 +99,7 @@ Request methods support following optional parameters:
 
 ## Changelog:
 
++ __0.0.6__: `last_url` part in request return array
 + __0.0.5__: `:force_ignore` option for requests
 + __0.0.4__: `:content_type` option for POST requests
 + __0.0.3__: request timeout added (previously only connect timeout)

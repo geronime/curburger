@@ -8,7 +8,8 @@ module Curburger
 
 		private
 
-		# Return [content-type, content, time], [nil, err, time] upon error.
+		# Return [nil, err, last_url, time] upon error,
+		# [content-type, content, last_url, time] otherwise.
 		# Content is recoded to UTF-8 if original encoding is successfully guessed,
 		# byte encoded original is returned otherwise.
 		# In case of enabled cookies, the @cookie_jar hash is used and merged
@@ -66,7 +67,8 @@ module Curburger
 							'Done in %.6f secs (%u/%u attempt%s, %us/%us connect/timeout).',#_
 							m.to_s.upcase, url, Time.now - t, attempt, opts[:attempts],     #_
 							attempt == 1 ? '' : 's', @curb.connect_timeout, @curb.timeout))
-					return [ctype, content, sprintf('%.6f', Time.now - t)]
+					return [ctype, content, @curb.last_effective_url,
+							sprintf('%.6f', Time.now - t)]
 				rescue Exception => e
 					log? && GLogg.log_i? && GLogg.log_i(sprintf(
 							'Curburger::Request#request:' +
@@ -86,7 +88,8 @@ module Curburger
 						@curb.connect_timeout, @curb.timeout, last_err
 				log? ? GLogg.log_e(msg) : warn(msg)
 			end
-			return [nil, last_err, sprintf('%.6f', Time.now - t)]
+			return [nil, last_err, @curb.last_effective_url,
+					sprintf('%.6f', Time.now - t)]
 		end
 
 		# Check whether the number of requests is within the limit.
