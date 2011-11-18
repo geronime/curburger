@@ -3,6 +3,7 @@ require 'bundler/setup'
 require 'glogg'
 require 'curb'
 
+require 'curburger/headers'
 require 'curburger/recode'
 require 'curburger/request'
 
@@ -37,6 +38,8 @@ module Curburger
 			if o[:req_limit] && o[:req_time_range] # enable request limitation
 				@req_limit, @req_time_range = o[:req_limit].to_i, o[:req_time_range].to_i
 				@reqs = {:cnt => 0, :next_check => Time.now + @req_time_range}
+			else
+				@reqs = nil # initialize variable to avoid warnings
 			end
 			@curb = Curl::Easy.new
 			@curb.useragent = o[:user_agent] if o[:user_agent]
@@ -60,6 +63,14 @@ module Curburger
 			@glogging
 		end
 
+		# return headers of the last reply parsed to Hash
+		def headers
+			hdr = @curb.header_str
+			self.class.recode(log?, @curb.content_type, hdr) ?
+				self.class.parse_headers(hdr) :
+				self.class.parse_headers(@curb.header_str) # recode failed
+		end
+
 		private
 
 		# default connection timeout, request timeout, attempt count, and retry wait
@@ -68,6 +79,7 @@ module Curburger
 		REQ_ATTEMPTS   = 3
 		REQ_RETRY_WAIT = 0 # disabled
 
+		extend  Curburger::Headers
 		extend  Curburger::Recode
 		include Curburger::Request
 

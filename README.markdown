@@ -97,8 +97,19 @@ Request methods support following optional parameters:
   `application/x-www-form-urlencoded` Content-Type HTTP POST header
   (new in __0.0.4__)
 
+#### Headers:
+
+To obtain headers of the last reply parsed into `Hash` use `headers`
+instance method (new in __0.0.7__):
+
+    headers = c.headers
+
+  + the first line (status line) is stored in `Status` key of the returned `Hash`
+  + multivalue headers are stored in an `Array`
+
 ## Changelog:
 
++ __0.0.7__: `headers` instance method
 + __0.0.6__: `last_url` part in request return array
 + __0.0.5__: `:force_ignore` option for requests
 + __0.0.4__: `:content_type` option for POST requests
