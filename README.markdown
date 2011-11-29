@@ -109,6 +109,7 @@ instance method (new in __0.0.7__):
 
 ## Changelog:
 
++ __0.0.8__: removed "`require 'bundler/setup'`" statements
 + __0.0.7__: `headers` instance method
 + __0.0.6__: `last_url` part in request return array
 + __0.0.5__: `:force_ignore` option for requests
