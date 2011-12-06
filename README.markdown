@@ -47,6 +47,11 @@ Configurable features:
   + `req_limit` - limit number of successful requests per `req_time_range`
   time period (default `nil`)
   + `req_time_range` - set requests limit time period in seconds
+  + `resolve_mode` - override resolving mode (new in __0.0.9__, default `:ipv4`)
+    + possible options: `:auto`, `:ipv4`, `:ipv6`
+    + `curl` default `:auto` may generate frequent
+  `Curl::Err::HostResolutionError` errors for ipv4 only machine therefore
+  Curburger uses `:ipv4` as default
 
 ### Available request methods:
 
@@ -109,6 +114,7 @@ instance method (new in __0.0.7__):
 
 ## Changelog:
 
++ __0.0.9__: `:resolve_mode` instance option
 + __0.0.8__: removed "`require 'bundler/setup'`" statements
 + __0.0.7__: `headers` instance method
 + __0.0.6__: `last_url` part in request return array

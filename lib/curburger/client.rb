@@ -26,6 +26,10 @@ module Curburger
 		#   req_limit      - limit number of successful requests per req_time_range
 		#                    time period (nil)
 		#   req_time_range - set request limit time period in seconds
+		#   resolve_mode   - override resolving mode. Possible options are :auto,
+		#                    :ipv4, :ipv6, with :auto default for curb but it may
+		#                    generate frequent Curl::Err::HostResolutionError
+		#                    for ipv4 only machine. Curburger uses :ipv4 default.
 		def initialize o={}
 			self.class.hash_keys_to_sym o
 			@glogging = o[:logging].nil? ? true : o[:logging] ? true : false
@@ -46,6 +50,7 @@ module Curburger
 			@curb.enable_cookies = true if o[:cookies]
 			@curb.follow_location =
 				o[:follow_loc].nil? ? true : o[:follow_loc] ? true : false
+			@curb.resolve_mode = o[:resolve_mode] || :ipv4
 		end
 
 		def get url, opts={}, &block
