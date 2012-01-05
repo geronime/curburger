@@ -79,6 +79,8 @@ Request methods support following optional parameters:
   + `encoding` - force encoding for the response body (default `nil`)
   + `force_ignore` - use `UTF-8//IGNORE` target encoding in iconv (new in
   __0.0.5__, default `false`)
+  + `headers` - add custom HTTP headers to the request (new in __0.1.0__,
+  default `{}`)
   + optional _block_ given:
     + relevant only in case of enabled request per time period limitation
     + request method yields to execute the block before sleeping if the
@@ -114,6 +116,7 @@ instance method (new in __0.0.7__):
 
 ## Changelog:
 
++ __0.1.0__: `:headers` option for custom headers in requests
 + __0.0.9__: `:resolve_mode` instance option
 + __0.0.8__: removed "`require 'bundler/setup'`" statements
 + __0.0.7__: `headers` instance method

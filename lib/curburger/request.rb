@@ -22,6 +22,7 @@ module Curburger
 		#   retry_wait   - redefine Curburger::Client instance @req_retry_wait
 		#   encoding     - force encoding for the fetched page (nil)
 		#   force_ignore - use 'UTF-8//IGNORE' target encoding in iconv (false)
+		#   headers      - add custom HTTP headers (both GET, POST) (empty hash)
 		#   data         - data to be sent in the request (empty string)
 		#   content_type - specify custom content-type for POST request only
 		# In case of enabled request per time frame limitation the method yields to
@@ -31,6 +32,8 @@ module Curburger
 			self.class.hash_keys_to_sym opts
 			t, attempt, last_err = Time.now, 0, nil
 			@curb.headers = {} # reset request headers (custom content-type in POST)
+			@curb.headers = opts[:headers] \
+					if opts[:headers] && opts[:headers].kind_of?(Hash)
 			@curb.url = url
 			if opts[:user]
 				@curb.http_auth_types, @curb.username, @curb.password =
