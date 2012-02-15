@@ -16,6 +16,7 @@ module Curburger
 		# Available options and defaults in opts hash:
 		#   user
 		#   password     - specify username/password for basic http authentication
+		#   follow_loc   - redefine Curburger::Client instance @follow_loc
 		#   ctimeout     - redefine Curburger::Client instance @req_ctimeout
 		#   timeout      - redefine Curburger::Client instance @req_timeout
 		#   attempts     - redefine Curburger::Client instance @req_attempts
@@ -24,7 +25,7 @@ module Curburger
 		#   force_ignore - use 'UTF-8//IGNORE' target encoding in iconv (false)
 		#   headers      - add custom HTTP headers (both GET, POST) (empty hash)
 		#   data         - data to be sent in the request (empty string)
-		#   content_type - specify custom content-type for POST request only
+		#   content_type - specify custom content-type for POST/PUT request only
 		# In case of enabled request per time frame limitation the method yields to
 		# execute the optional block before sleeping if the @req_limit was reached.
 		def request method, url, opts={}, block=nil
@@ -41,18 +42,27 @@ module Curburger
 			else
 				@curb.http_auth_types = nil # reset
 			end
+			@curb.follow_location =
+				opts[:follow_loc].nil? ? @follow_loc : opts[:follow_loc]
 			@curb.connect_timeout = opts[:ctimeout] ? opts[:ctimeout] : @req_ctimeout
 			@curb.timeout = opts[:timeout] ? opts[:timeout] : @req_timeout
 			opts[:attempts]   = @req_attempts   unless opts[:attempts]
 			opts[:retry_wait] = @req_retry_wait unless opts[:req_retry_wait]
+			if opts[:content_type] && [:put, :post].include?(m)
+				@curb.headers['Content-Type'] = opts[:content_type]
+			end
 			while (attempt += 1) <= opts[:attempts]
 				req_limit_check block if @reqs # request limitation enabled
 				begin
 					case m
-						when :post then
-							opts[:content_type] &&
-								@curb.headers['Content-Type'] = opts[:content_type]
+						when :head   then
+							@curb.http_head
+						when :post   then
 							@curb.http_post(opts[:data])
+						when :put    then
+							@curb.http_put(opts[:data])
+						when :delete then
+							@curb.http_delete
 						else # GET
 							@curb.http_get
 					end
@@ -60,9 +70,14 @@ module Curburger
 						status = $1 if @curb.header_str.match(%r{ ([45]\d{2} .*)\r\n})
 						raise Exception.new(status)
 					end
-					ctype, content = @curb.content_type, @curb.body_str
-					self.class.recode(log?, ctype, content,
-							*opts.values_at(:force_ignore, :encoding))
+					ctype, content = @curb.content_type, nil
+					if m == :head
+						content = @curb.header_str
+					else
+						content = @curb.body_str
+						self.class.recode(log?, ctype, content,
+								*opts.values_at(:force_ignore, :encoding))
+					end
 					@reqs[:cnt] += 1 if @reqs # increase request limitation counter
 					log? && GLogg.log_d4? && GLogg.log_d4(sprintf(                      #_
 							"Curburger::Request#request:\n    %s %s\n    " +                #_

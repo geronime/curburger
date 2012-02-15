@@ -32,7 +32,8 @@ module Curburger
 		#                    for ipv4 only machine. Curburger uses :ipv4 default.
 		def initialize o={}
 			self.class.hash_keys_to_sym o
-			@glogging = o[:logging].nil? ? true : o[:logging] ? true : false
+			@glogging   = o[:logging].nil?    ? true : o[:logging]    ? true : false
+			@follow_loc = o[:follow_loc].nil? ? true : o[:follow_loc] ? true : false
 			@req_ctimeout   = o[:req_ctimeout] ? o[:req_ctimeout].to_i : REQ_CONN_TOUT
 			@req_timeout    = o[:req_timeout]  ? o[:req_timeout].to_i  : REQ_TOUT
 			@req_attempts   = o[:req_attempts] ? o[:req_attempts].to_i : REQ_ATTEMPTS
@@ -48,9 +49,13 @@ module Curburger
 			@curb.useragent = o[:user_agent] if o[:user_agent]
 			@curb.proxy_url = o[:http_proxy] if o[:http_proxy]
 			@curb.enable_cookies = true if o[:cookies]
-			@curb.follow_location =
-				o[:follow_loc].nil? ? true : o[:follow_loc] ? true : false
 			@curb.resolve_mode = o[:resolve_mode] || :ipv4
+		end
+
+		def head url, opts={}, &block
+			rslt = request :head, url, opts, block
+			rslt[1] = self.class.parse_headers rslt[1]
+			rslt
 		end
 
 		def get url, opts={}, &block
@@ -60,6 +65,15 @@ module Curburger
 		def post url, data, opts={}, &block
 			opts[:data] = data_to_s data
 			request :post, url, opts, block
+		end
+
+		def put url, opts={}, &block
+			opts[:data] = data_to_s data
+			request :put, url, opts, block
+		end
+
+		def delete url, opts={}, &block
+			request :delete, url, opts, block
 		end
 
 		# Is the logging through GLogg enabled or not?

@@ -55,13 +55,23 @@ Configurable features:
 
 ### Available request methods:
 
-Two request methods are available for now: `get` and `post`.
-Both return arrays:
+Available request methods:
+
+  + `head` (new in __0.1.1__)
+  + `get`
+  + `post`
+  + `put` (new in __0.1.1__)
+  + `delete` (new in __0.1.1__)
+
+These methods return arrays:
 
   + in case of error return `[nil, error_message, last_url, time]`
   + `[content_type, content, last_url, time]` otherwise
-    + `content` is recoded to `UTF-8` encoding for the most cases: for more
-  information refer to description in `Curburger::Recode#recode`
+    + `content`
+      + for `head` method it is the header decoded to hash (decoded
+  in the same way as `headers` method)
+      + otherwise it is response body recoded to `UTF-8` encoding for the most
+  cases: for more information refer to description in `Curburger::Recode#recode`
     + `last_url` is last effective URL  of the request - to recognize
   redirections (new in __0.0.6__)
     + `time` is request processing time formatted to `%.6f` seconds
@@ -72,6 +82,8 @@ Request methods support following optional parameters:
 
   + `user`
   + `password` - credentials for basic HTTP authentication (default `nil`)
+  + `follow_loc` - redefine instance `follow_loc` for this request (new in
+  __0.1.1__)
   + `ctimeout` - redefine instance `req_ctimeout` for this request
   + `timeout` - redefine instance `req_timeout` for this request
   + `attempts` - redefine instance `req_attempts` for this request
@@ -86,13 +98,18 @@ Request methods support following optional parameters:
     + request method yields to execute the block before sleeping if the
   reqeust limit was reached
 
+#### HEAD
+
+    result = c.head(url, {opts}) { optional block ... }
+
 #### GET
 
     result = c.get(url, {opts}) { optional block ... }
 
-#### POST
+#### POST, PUT
 
     result = c.post(url, data, {opts}) { optional block ... }
+    result = c.put(url, data, {opts}) { optional block ... }
 
   + `data` parameter is expected in `String` scalar or `Hash` of
   `{parameter => value}`
@@ -103,6 +120,10 @@ Request methods support following optional parameters:
   + optional `content_type` option overrides default
   `application/x-www-form-urlencoded` Content-Type HTTP POST header
   (new in __0.0.4__)
+
+#### DELETE
+
+    result = c.delete(url, {opts}) { optional block ... }
 
 #### Headers:
 
@@ -116,6 +137,7 @@ instance method (new in __0.0.7__):
 
 ## Changelog:
 
++ __0.1.1__: `:follow_loc` option for requests; HEAD, PUT, DELETE requests
 + __0.1.0__: `:headers` option for custom headers in requests
 + __0.0.9__: `:resolve_mode` instance option
 + __0.0.8__: removed "`require 'bundler/setup'`" statements
