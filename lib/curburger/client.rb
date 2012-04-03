@@ -15,6 +15,8 @@ module Curburger
 		#   user_agent     - set user agent string (default is the curb one)
 		#   http_proxy     - setup http proxy for this instance (nil)
 		#   cookies        - enable cookie jar (false)
+		#   http_auth      - specify default http authentication data sent each req.
+		#                    (hash containing keys user, password, default {})
 		#   follow_loc     - follow Location in HTTP response header (true)
 		#   req_ctimeout   - connection timeout for the requests (REQ_CONN_TOUT)
 		#                    - this is the timeout for the connection to be made,
@@ -31,7 +33,7 @@ module Curburger
 		#                    generate frequent Curl::Err::HostResolutionError
 		#                    for ipv4 only machine. Curburger uses :ipv4 default.
 		def initialize o={}
-			self.class.hash_keys_to_sym o
+			o = self.class.hash_keys_to_sym o
 			@glogging   = o[:logging].nil?    ? true : o[:logging]    ? true : false
 			@follow_loc = o[:follow_loc].nil? ? true : o[:follow_loc] ? true : false
 			@req_ctimeout   = o[:req_ctimeout] ? o[:req_ctimeout].to_i : REQ_CONN_TOUT
@@ -45,6 +47,7 @@ module Curburger
 			else
 				@reqs = nil # initialize variable to avoid warnings
 			end
+			self.http_auth = o[:http_auth]
 			@curb = Curl::Easy.new
 			@curb.useragent = o[:user_agent] if o[:user_agent]
 			@curb.proxy_url = o[:http_proxy] if o[:http_proxy]
@@ -52,28 +55,46 @@ module Curburger
 			@curb.resolve_mode = o[:resolve_mode] || :ipv4
 		end
 
+		def http_auth
+			@http_auth
+		end
+
+		def http_auth= http_auth
+			if http_auth
+				raise 'Hash expected for :http_auth option!' \
+					unless http_auth.kind_of?(Hash)
+				http_auth = self.class.hash_keys_to_sym http_auth
+				http_auth.select!{|k, v| [:user, :password].include? k }
+				raise 'Keys \'user\' and \'password\' expected in :http_auth!' \
+					unless http_auth[:user] && http_auth[:password]
+				@http_auth = http_auth
+			else
+				@http_auth = {}
+			end
+		end
+
 		def head url, opts={}, &block
-			rslt = request :head, url, opts, block
+			rslt = request :head, url, @http_auth.merge(opts), block
 			rslt[1] = self.class.parse_headers rslt[1]
 			rslt
 		end
 
 		def get url, opts={}, &block
-			request :get, url, opts, block
+			request :get, url, @http_auth.merge(opts), block
 		end
 
 		def post url, data, opts={}, &block
 			opts[:data] = data_to_s data
-			request :post, url, opts, block
+			request :post, url, @http_auth.merge(opts), block
 		end
 
 		def put url, opts={}, &block
 			opts[:data] = data_to_s data
-			request :put, url, opts, block
+			request :put, url, @http_auth.merge(opts), block
 		end
 
 		def delete url, opts={}, &block
-			request :delete, url, opts, block
+			request :delete, url, @http_auth.merge(opts), block
 		end
 
 		# Is the logging through GLogg enabled or not?
@@ -102,7 +123,9 @@ module Curburger
 		include Curburger::Request
 
 		def self.hash_keys_to_sym h
-			h.each_pair{|k, v| h[k.to_sym] = h.delete k if k.kind_of? String }
+			hash = {}
+			h.each_pair{|k, v| hash[k.to_sym] = h[k] }
+			hash
 		end
 
 		def data_to_s data

@@ -16,6 +16,7 @@ Configurable features:
 + number of attempts for each request
 + random sleep time before retrying failed request (new in __0.0.2__)
 + per-instance request count per time period limitation
++ default instance http authentication (new in __0.1.3__)
 
 ## Usage
 
@@ -35,6 +36,8 @@ Configurable features:
   `curb`)
   + `http_proxy` - set instance proxy url (default `nil`)
   + `cookies` - enable cookies for this instance (default `false`)
+  + `http_auth` - default instance http authentication credentials sent with
+  requests (hash with keys `user`, `password`, default `{}`)
   + `follow_loc` - follow `Location:` in HTTP response header (default `true`)
   + `req_ctimeout` - connection timeout for the requests (default `10`)
     + this is the timeout for the connection to be established, not the timeout
@@ -52,6 +55,12 @@ Configurable features:
     + `curl` default `:auto` may generate frequent
   `Curl::Err::HostResolutionError` errors for ipv4 only machine therefore
   Curburger uses `:ipv4` as default
+
+### Instance methods:
+
+  + `http_auth`
+  + `http_auth=`
+    + get/set default authentication credentials (`nil` clears the settings)
 
 ### Available request methods:
 
@@ -81,7 +90,8 @@ These methods return arrays:
 Request methods support following optional parameters:
 
   + `user`
-  + `password` - credentials for basic HTTP authentication (default `nil`)
+  + `password` - credentials for basic HTTP authentication
+  (override instance `http_auth` for this request, default `nil`)
   + `follow_loc` - redefine instance `follow_loc` for this request (new in
   __0.1.1__)
   + `ctimeout` - redefine instance `req_ctimeout` for this request
@@ -139,6 +149,7 @@ instance method (new in __0.0.7__):
 
 ## Changelog:
 
++ __0.1.3__: default instance http authentication
 + __0.1.2__: `:cookies` option to set additional cookies for requests
 + __0.1.1__: `:follow_loc` option for requests; HEAD, PUT, DELETE requests
 + __0.1.0__: `:headers` option for custom headers in requests

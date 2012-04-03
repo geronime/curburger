@@ -31,7 +31,7 @@ module Curburger
 		# execute the optional block before sleeping if the @req_limit was reached.
 		def request method, url, opts={}, block=nil
 			m = method.downcase.to_sym
-			self.class.hash_keys_to_sym opts
+			opts = self.class.hash_keys_to_sym opts
 			t, attempt, last_err = Time.now, 0, nil
 			@curb.cookies = nil # reset additional cookies
 			@curb.cookies = opts[:cookies] \
