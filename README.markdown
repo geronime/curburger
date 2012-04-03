@@ -91,6 +91,8 @@ Request methods support following optional parameters:
   + `encoding` - force encoding for the response body (default `nil`)
   + `force_ignore` - use `UTF-8//IGNORE` target encoding in iconv (new in
   __0.0.5__, default `false`)
+  + `cookies` - set additional cookies for the request (new in __0.1.2__,
+  default `nil`)
   + `headers` - add custom HTTP headers to the request (new in __0.1.0__,
   default `{}`)
   + optional _block_ given:
@@ -137,6 +139,7 @@ instance method (new in __0.0.7__):
 
 ## Changelog:
 
++ __0.1.2__: `:cookies` option to set additional cookies for requests
 + __0.1.1__: `:follow_loc` option for requests; HEAD, PUT, DELETE requests
 + __0.1.0__: `:headers` option for custom headers in requests
 + __0.0.9__: `:resolve_mode` instance option
