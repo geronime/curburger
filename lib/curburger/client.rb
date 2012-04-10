@@ -84,16 +84,17 @@ module Curburger
 		end
 
 		def post url, data, opts={}, &block
-			opts[:data] = data_to_s data
+			opts[:data] = data
 			request :post, url, @http_auth.merge(opts), block
 		end
 
-		def put url, opts={}, &block
-			opts[:data] = data_to_s data
+		def put url, data, opts={}, &block
+			opts[:data] = data
 			request :put, url, @http_auth.merge(opts), block
 		end
 
-		def delete url, opts={}, &block
+		def delete url, data=nil, opts={}, &block
+			opts[:data] = data
 			request :delete, url, @http_auth.merge(opts), block
 		end
 
@@ -126,19 +127,6 @@ module Curburger
 			hash = {}
 			h.each_pair{|k, v| hash[k.to_sym] = h[k] }
 			hash
-		end
-
-		def data_to_s data
-			if data.kind_of? Hash
-				a = []
-				data.each_pair{|k, v|
-					a.push "#{@curb.escape k.to_s}=#{@curb.escape v.to_s}" }
-				a.join '&'
-			elsif data.kind_of? String
-				data
-			else
-				throw "Unsupported data format: #{data.class} !"
-			end
 		end
 
 	end # Client

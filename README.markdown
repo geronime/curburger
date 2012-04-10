@@ -118,10 +118,11 @@ Request methods support following optional parameters:
 
     result = c.get(url, {opts}) { optional block ... }
 
-#### POST, PUT
+#### POST, PUT, DELETE
 
     result = c.post(url, data, {opts}) { optional block ... }
     result = c.put(url, data, {opts}) { optional block ... }
+    result = c.delete(url, data=nil, {opts}) { optional block ... }
 
   + `data` parameter is expected in `String` scalar or `Hash` of
   `{parameter => value}`
@@ -132,10 +133,7 @@ Request methods support following optional parameters:
   + optional `content_type` option overrides default
   `application/x-www-form-urlencoded` Content-Type HTTP POST header
   (new in __0.0.4__)
-
-#### DELETE
-
-    result = c.delete(url, {opts}) { optional block ... }
+  + the optional `data` parameter in DELETE request is new in __0.1.4__
 
 #### Headers:
 
@@ -149,6 +147,7 @@ instance method (new in __0.0.7__):
 
 ## Changelog:
 
++ __0.1.4__: optional post data in DELETE request, bugfix
 + __0.1.3__: default instance http authentication
 + __0.1.2__: `:cookies` option to set additional cookies for requests
 + __0.1.1__: `:follow_loc` option for requests; HEAD, PUT, DELETE requests

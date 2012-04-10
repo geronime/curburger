@@ -25,36 +25,32 @@ module Curburger
 		#   force_ignore - use 'UTF-8//IGNORE' target encoding in iconv (false)
 		#   cookies      - set custom additional cookies (string, default nil)
 		#   headers      - add custom HTTP headers (empty hash)
-		#   data         - data to be sent in the request (empty string)
+		#   data         - data to be sent in the request (nil)
 		#   content_type - specify custom content-type for POST/PUT request only
 		# In case of enabled request per time frame limitation the method yields to
 		# execute the optional block before sleeping if the @req_limit was reached.
 		def request method, url, opts={}, block=nil
-			m = method.downcase.to_sym
+			t, m, attempt, last_err = Time.now, method.downcase.to_sym, 0, nil
 			opts = self.class.hash_keys_to_sym opts
-			t, attempt, last_err = Time.now, 0, nil
+			opts[:data] = data_to_s opts[:data]
+			@curb.url = url
 			@curb.cookies = nil # reset additional cookies
 			@curb.cookies = opts[:cookies] \
-					if opts[:cookies] && opts[:cookies].kind_of?(String)
-			@curb.headers = {} # reset request headers (custom content-type in POST)
+				if opts[:cookies] && opts[:cookies].kind_of?(String)
+			@curb.headers = {} # reset additional request headers
 			@curb.headers = opts[:headers] \
-					if opts[:headers] && opts[:headers].kind_of?(Hash)
-			@curb.url = url
-			if opts[:user]
-				@curb.http_auth_types, @curb.username, @curb.password =
-					:basic, *opts.values_at(:user, :password)
-			else
-				@curb.http_auth_types = nil # reset
-			end
+				if opts[:headers] && opts[:headers].kind_of?(Hash)
+			@curb.headers['Content-Type'] = opts[:content_type] \
+				if opts[:content_type] && [:put, :post, :delete].include?(m)
+			@curb.http_auth_types = nil # reset authentication data
+			@curb.http_auth_types, @curb.username, @curb.password =
+				:basic, *opts.values_at(:user, :password) if opts[:user]
 			@curb.follow_location =
 				opts[:follow_loc].nil? ? @follow_loc : opts[:follow_loc]
 			@curb.connect_timeout = opts[:ctimeout] ? opts[:ctimeout] : @req_ctimeout
 			@curb.timeout = opts[:timeout] ? opts[:timeout] : @req_timeout
 			opts[:attempts]   = @req_attempts   unless opts[:attempts]
 			opts[:retry_wait] = @req_retry_wait unless opts[:req_retry_wait]
-			if opts[:content_type] && [:put, :post].include?(m)
-				@curb.headers['Content-Type'] = opts[:content_type]
-			end
 			while (attempt += 1) <= opts[:attempts]
 				req_limit_check block if @reqs # request limitation enabled
 				begin
@@ -62,10 +58,11 @@ module Curburger
 						when :head   then
 							@curb.http_head
 						when :post   then
-							@curb.http_post(opts[:data])
+							@curb.http_post opts[:data]
 						when :put    then
-							@curb.http_put(opts[:data])
+							@curb.http_put opts[:data]
 						when :delete then
+							@curb.post_body = opts[:data]
 							@curb.http_delete
 						else # GET
 							@curb.http_get
@@ -139,6 +136,19 @@ module Curburger
 						'Curburger::Request#req_limit_check: Resetting counter ' +        #_
 						'(%u/%u requests done).', @reqs[:cnt], @req_limit))               #_
 				@reqs[:cnt], @reqs[:next_check] = 0, Time.now + @req_time_range
+			end
+		end
+
+		def data_to_s data
+			if data.nil? || data.kind_of?(String)
+				data
+			elsif data.kind_of? Hash
+				a = []
+				data.each_pair{|k, v|
+					a.push "#{@curb.escape k.to_s}=#{@curb.escape v.to_s}" }
+				a.join '&'
+			else
+				throw "Unsupported data format: #{data.class} !"
 			end
 		end
 
