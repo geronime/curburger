@@ -71,7 +71,7 @@ module Curburger
 						status = $1 if @curb.header_str.match(%r{ ([45]\d{2} .*)\r\n})
 						raise Exception.new(status)
 					end
-					ctype, content = @curb.content_type, nil
+					ctype, content = @curb.content_type || '', nil
 					if m == :head
 						content = @curb.header_str
 					else

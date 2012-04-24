@@ -76,6 +76,8 @@ These methods return arrays:
 
   + in case of error return `[nil, error_message, last_url, time]`
   + `[content_type, content, last_url, time]` otherwise
+    + `content_type` is appropriate response HTTP header value
+      + empty string in case of missing `Content-Type` header (new in __0.1.5__)
     + `content`
       + for `head` method it is the header decoded to hash (decoded
   in the same way as `headers` method)
@@ -147,6 +149,8 @@ instance method (new in __0.0.7__):
 
 ## Changelog:
 
++ __0.1.5__: empty string `content_type` returned from requests in case of
+  missing `Content-Type` HTTP header
 + __0.1.4__: optional post data in DELETE request, bugfix
 + __0.1.3__: default instance http authentication
 + __0.1.2__: `:cookies` option to set additional cookies for requests
