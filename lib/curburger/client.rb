@@ -18,6 +18,7 @@ module Curburger
 		#   http_auth      - specify default http authentication data sent each req.
 		#                    (hash containing keys user, password, default {})
 		#   follow_loc     - follow Location in HTTP response header (true)
+		#   verify_ssl     - whether to check SSL certificates (true)
 		#   req_ctimeout   - connection timeout for the requests (REQ_CONN_TOUT)
 		#                    - this is the timeout for the connection to be made,
 		#                      not the timeout for the whole request and reply)
@@ -36,6 +37,7 @@ module Curburger
 			o = self.class.hash_keys_to_sym o
 			@glogging   = o[:logging].nil?    ? true : o[:logging]    ? true : false
 			@follow_loc = o[:follow_loc].nil? ? true : o[:follow_loc] ? true : false
+			@verify_ssl = o[:verify_ssl].nil? ? true : o[:verify_ssl] ? true : false
 			@req_ctimeout   = o[:req_ctimeout] ? o[:req_ctimeout].to_i : REQ_CONN_TOUT
 			@req_timeout    = o[:req_timeout]  ? o[:req_timeout].to_i  : REQ_TOUT
 			@req_attempts   = o[:req_attempts] ? o[:req_attempts].to_i : REQ_ATTEMPTS

@@ -17,6 +17,7 @@ Configurable features:
 + random sleep time before retrying failed request (new in __0.0.2__)
 + per-instance request count per time period limitation
 + default instance http authentication (new in __0.1.3__)
++ default instance SSL certificate verification (new in __0.1.6__)
 
 ## Usage
 
@@ -39,6 +40,7 @@ Configurable features:
   + `http_auth` - default instance http authentication credentials sent with
   requests (hash with keys `user`, `password`, default `{}`)
   + `follow_loc` - follow `Location:` in HTTP response header (default `true`)
+  + `verify_ssl` - whether to verify SSL certificates (default `true`)
   + `req_ctimeout` - connection timeout for the requests (default `10`)
     + this is the timeout for the connection to be established, not the timeout
   for the whole request & reply
@@ -96,6 +98,8 @@ Request methods support following optional parameters:
   (override instance `http_auth` for this request, default `nil`)
   + `follow_loc` - redefine instance `follow_loc` for this request (new in
   __0.1.1__)
+  + `verify_ssl` - redefine instance `verify_ssl` for this request (new in
+  __0.1.6__)
   + `ctimeout` - redefine instance `req_ctimeout` for this request
   + `timeout` - redefine instance `req_timeout` for this request
   + `attempts` - redefine instance `req_attempts` for this request
@@ -149,6 +153,7 @@ instance method (new in __0.0.7__):
 
 ## Changelog:
 
++ __0.1.6__: instance/request `verify_ssl` options
 + __0.1.5__: empty string `content_type` returned from requests in case of
   missing `Content-Type` HTTP header
 + __0.1.4__: optional post data in DELETE request, bugfix

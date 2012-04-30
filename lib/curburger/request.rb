@@ -17,6 +17,7 @@ module Curburger
 		#   user
 		#   password     - specify username/password for basic http authentication
 		#   follow_loc   - redefine Curburger::Client instance @follow_loc
+		#   verify_ssl   - redefine Curburger::Client instance @verify_ssl
 		#   ctimeout     - redefine Curburger::Client instance @req_ctimeout
 		#   timeout      - redefine Curburger::Client instance @req_timeout
 		#   attempts     - redefine Curburger::Client instance @req_attempts
@@ -47,6 +48,9 @@ module Curburger
 				:basic, *opts.values_at(:user, :password) if opts[:user]
 			@curb.follow_location =
 				opts[:follow_loc].nil? ? @follow_loc : opts[:follow_loc]
+			@curb.ssl_verify_host = opts[:verify_ssl].nil? ?
+					@verify_ssl : opts[:verify_ssl] ? true : false
+			@curb.ssl_verify_peer = @curb.ssl_verify_host
 			@curb.connect_timeout = opts[:ctimeout] ? opts[:ctimeout] : @req_ctimeout
 			@curb.timeout = opts[:timeout] ? opts[:timeout] : @req_timeout
 			opts[:attempts]   = @req_attempts   unless opts[:attempts]
