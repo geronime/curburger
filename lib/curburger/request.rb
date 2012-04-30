@@ -18,6 +18,7 @@ module Curburger
 		#   password     - specify username/password for basic http authentication
 		#   follow_loc   - redefine Curburger::Client instance @follow_loc
 		#   verify_ssl   - redefine Curburger::Client instance @verify_ssl
+		#   retry_45     - redefine Curburger::Client instance @retry_45
 		#   ctimeout     - redefine Curburger::Client instance @req_ctimeout
 		#   timeout      - redefine Curburger::Client instance @req_timeout
 		#   attempts     - redefine Curburger::Client instance @req_attempts
@@ -34,6 +35,7 @@ module Curburger
 			t, m, attempt, last_err = Time.now, method.downcase.to_sym, 0, nil
 			opts = self.class.hash_keys_to_sym opts
 			opts[:data] = data_to_s opts[:data]
+			opts[:retry_45] = @retry_45 if opts[:retry_45].nil?
 			@curb.url = url
 			@curb.cookies = nil # reset additional cookies
 			@curb.cookies = opts[:cookies] \
@@ -97,6 +99,8 @@ module Curburger
 							"\n    %s %s\n    Attempt %u/%u failed: %s",
 							m.to_s.upcase, url, attempt, opts[:attempts], e.message))
 					last_err = e.message
+					break if !opts[:retry_45] &&
+							@curb.response_code >= 400 && @curb.response_code < 600
 					sleep(1 + rand(opts[:retry_wait])) \
 							if opts[:retry_wait] > 0 && attempt < opts[:attempts]
 					next

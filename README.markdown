@@ -14,6 +14,7 @@ Configurable features:
 + request connection timeout
 + request timeout (new in __0.0.3__)
 + number of attempts for each request
+  + default instance configuration to retry 4XX/5XX responses (new in __0.1.7__)
 + random sleep time before retrying failed request (new in __0.0.2__)
 + per-instance request count per time period limitation
 + default instance http authentication (new in __0.1.3__)
@@ -40,7 +41,10 @@ Configurable features:
   + `http_auth` - default instance http authentication credentials sent with
   requests (hash with keys `user`, `password`, default `{}`)
   + `follow_loc` - follow `Location:` in HTTP response header (default `true`)
-  + `verify_ssl` - whether to verify SSL certificates (default `true`)
+  + `verify_ssl` - whether to verify SSL certificates (new in __0.1.6__,
+  default `true`)
+  + `retry_45` - whether to retry 4XX/5XX responses (new in __0.1.7__,
+  default `false`, in previous versions `true` behaviour)
   + `req_ctimeout` - connection timeout for the requests (default `10`)
     + this is the timeout for the connection to be established, not the timeout
   for the whole request & reply
@@ -100,6 +104,8 @@ Request methods support following optional parameters:
   __0.1.1__)
   + `verify_ssl` - redefine instance `verify_ssl` for this request (new in
   __0.1.6__)
+  + `retry_45` - redefine instance `retry_45` for this request (new in
+  __0.1.7__)
   + `ctimeout` - redefine instance `req_ctimeout` for this request
   + `timeout` - redefine instance `req_timeout` for this request
   + `attempts` - redefine instance `req_attempts` for this request
@@ -153,6 +159,7 @@ instance method (new in __0.0.7__):
 
 ## Changelog:
 
++ __0.1.7__: instance/request `retry_45` options
 + __0.1.6__: instance/request `verify_ssl` options
 + __0.1.5__: empty string `content_type` returned from requests in case of
   missing `Content-Type` HTTP header
