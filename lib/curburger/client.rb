@@ -59,6 +59,14 @@ module Curburger
 			@curb.resolve_mode = o[:resolve_mode] || :ipv4
 		end
 
+		def user_agent
+			@curb.useragent
+		end
+
+		def user_agent= ua
+			@curb.useragent = ua
+		end
+
 		def http_auth
 			@http_auth
 		end

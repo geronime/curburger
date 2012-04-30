@@ -64,6 +64,9 @@ Configurable features:
 
 ### Instance methods:
 
+  + `user_agent`
+  + `user_agent=`
+    + get/set currently configured instance `user_agent` (new in __0.1.8__)
   + `http_auth`
   + `http_auth=`
     + get/set default authentication credentials (`nil` clears the settings)
@@ -159,6 +162,7 @@ instance method (new in __0.0.7__):
 
 ## Changelog:
 
++ __0.1.8__: `user_agent` and `user_agent=` get/set methods
 + __0.1.7__: instance/request `retry_45` options
 + __0.1.6__: instance/request `verify_ssl` options
 + __0.1.5__: empty string `content_type` returned from requests in case of
