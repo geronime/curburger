@@ -7,12 +7,6 @@ module Curburger
 
 		private
 
-		# Return [nil, err, last_url, time] upon error,
-		# [content-type, content, last_url, time] otherwise.
-		# Content is recoded to UTF-8 if original encoding is successfully guessed,
-		# byte encoded original is returned otherwise.
-		# In case of enabled cookies, the @cookie_jar hash is used and merged
-		# with the new cookies.
 		# Available options and defaults in opts hash:
 		#   user
 		#   password     - specify username/password for basic http authentication
@@ -31,8 +25,19 @@ module Curburger
 		#   content_type - specify custom content-type for POST/PUT request only
 		# In case of enabled request per time frame limitation the method yields to
 		# execute the optional block before sleeping if the @req_limit was reached.
+		# Return value is always hash with following keys/values:
+		#   :content     - content of the response
+		#                  - recoded to UTF-8 if original encoding is guessed,
+		#                    byte encoded original otherwise
+		#                  - header content for HEAD request
+		#   :ctype       - Content-Type from response header
+		#   :last_url    - last effective url of the request
+		#   :attempts    - count of spent request attempts
+		#   :responses   - array [status_msg, time] of all attempts
+		#   :time        - total processing time
+		#   :error       - optional: in case of error here is the last error
 		def request method, url, opts={}, block=nil
-			t, m, attempt, last_err = Time.now, method.downcase.to_sym, 0, nil
+			t0, m, attempt, chain = Time.now, method.downcase.to_sym, 0, []
 			opts = self.class.hash_keys_to_sym opts
 			opts[:data] = data_to_s opts[:data]
 			opts[:retry_45] = @retry_45 if opts[:retry_45].nil?
@@ -57,8 +62,10 @@ module Curburger
 			@curb.timeout = opts[:timeout] ? opts[:timeout] : @req_timeout
 			opts[:attempts]   = @req_attempts   unless opts[:attempts]
 			opts[:retry_wait] = @req_retry_wait unless opts[:req_retry_wait]
-			while (attempt += 1) <= opts[:attempts]
+			while attempt < opts[:attempts]
+				attempt += 1
 				req_limit_check block if @reqs # request limitation enabled
+				t = Time.now
 				begin
 					case m
 						when :head   then
@@ -77,28 +84,27 @@ module Curburger
 						status = $1 if @curb.header_str.match(%r{ ([45]\d{2} .*)\r\n})
 						raise Exception.new(status)
 					end
-					ctype, content = @curb.content_type || '', nil
-					if m == :head
-						content = @curb.header_str
-					else
-						content = @curb.body_str
-						self.class.recode(log?, ctype, content,
-								*opts.values_at(:force_ignore, :encoding))
-					end
+					chain.push(['200 OK', (Time.now - t).round(6)])
+					rslt = get_result m, opts
 					@reqs[:cnt] += 1 if @reqs # increase request limitation counter
 					log? && GLogg.log_d4? && GLogg.log_d4(sprintf(                      #_
 							"Curburger::Request#request:\n    %s %s\n    " +                #_
 							'Done in %.6f secs (%u/%u attempt%s, %us/%us connect/timeout).',#_
-							m.to_s.upcase, url, Time.now - t, attempt, opts[:attempts],     #_
-							attempt == 1 ? '' : 's', @curb.connect_timeout, @curb.timeout))
-					return [ctype, content, @curb.last_effective_url,
-							sprintf('%.6f', Time.now - t)]
+							m.to_s.upcase, url, Time.now - t0, attempt, opts[:attempts],    #_
+							opts[:attempts] == 1 ? '' : 's',                                #_
+							@curb.connect_timeout, @curb.timeout))                          #_
+					return rslt.merge({
+						:last_url  => @curb.last_effective_url,
+						:attempts  => attempt,
+						:responses => chain,
+						:time      => (Time.now - t0).round(6),
+					})
 				rescue Exception => e
 					log? && GLogg.log_i? && GLogg.log_i(sprintf(
 							'Curburger::Request#request:' +
 							"\n    %s %s\n    Attempt %u/%u failed: %s",
 							m.to_s.upcase, url, attempt, opts[:attempts], e.message))
-					last_err = e.message
+					chain.push([e.message, (Time.now - t).round(6)])
 					break if !opts[:retry_45] &&
 							@curb.response_code >= 400 && @curb.response_code < 600
 					sleep(1 + rand(opts[:retry_wait])) \
@@ -106,16 +112,35 @@ module Curburger
 					next
 				end
 			end
+			rslt = get_result m, opts
 			if !log? || GLogg.log_e?
 				msg = sprintf "Curburger::Request#request:\n    %s %s\n    " +
-						'Failed in %.6f secs (%u attempt%s, %us/%us connect/timeout).' +
-						"\n    Last error: %s", m.to_s.upcase, url,
-						Time.now - t, opts[:attempts], opts[:attempts] == 1 ? '' : 's',
-						@curb.connect_timeout, @curb.timeout, last_err
+						'Failed in %.6f secs (%u/%u attempt%s, %us/%us connect/timeout).' +
+						"\n    Last error: %s", m.to_s.upcase, url, Time.now - t,
+						attempt, opts[:attempts], opts[:attempts] == 1 ? '' : 's',
+						@curb.connect_timeout, @curb.timeout, chain[-1][0]
 				log? ? GLogg.log_e(msg) : warn(msg)
 			end
-			return [nil, last_err, @curb.last_effective_url,
-					sprintf('%.6f', Time.now - t)]
+			return rslt.merge({
+				:last_url  => @curb.last_effective_url,
+				:attempts  => attempt,
+				:responses => chain,
+				:time      => (Time.now - t0).round(6),
+				:error     => chain[-1][0],
+			})
+		end
+
+		# return {ctype => <content_type>, :content => <recoded_content>}
+		def get_result method, opts
+			ctype, content = @curb.content_type || '', nil
+			if method == :head
+				content = @curb.header_str
+			else
+				content = @curb.body_str
+				self.class.recode(log?, ctype, content,
+						*opts.values_at(:force_ignore, :encoding))
+			end
+			{:content => content, :ctype => ctype}
 		end
 
 		# Check whether the number of requests is within the limit.

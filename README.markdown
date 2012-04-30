@@ -12,13 +12,13 @@ Configurable features:
 + enable cookies per-instance
 + disable following of `Location:` in HTTP response header
 + request connection timeout
-+ request timeout (new in __0.0.3__)
++ request timeout
 + number of attempts for each request
-  + default instance configuration to retry 4XX/5XX responses (new in __0.1.7__)
-+ random sleep time before retrying failed request (new in __0.0.2__)
+  + default instance configuration to retry 4XX/5XX responses
++ random sleep time before retrying failed request
 + per-instance request count per time period limitation
-+ default instance http authentication (new in __0.1.3__)
-+ default instance SSL certificate verification (new in __0.1.6__)
++ default instance http authentication
++ default instance SSL certificate verification
 
 ## Usage
 
@@ -41,10 +41,8 @@ Configurable features:
   + `http_auth` - default instance http authentication credentials sent with
   requests (hash with keys `user`, `password`, default `{}`)
   + `follow_loc` - follow `Location:` in HTTP response header (default `true`)
-  + `verify_ssl` - whether to verify SSL certificates (new in __0.1.6__,
-  default `true`)
-  + `retry_45` - whether to retry 4XX/5XX responses (new in __0.1.7__,
-  default `false`, in previous versions `true` behaviour)
+  + `verify_ssl` - whether to verify SSL certificates (default `true`)
+  + `retry_45` - whether to retry 4XX/5XX responses (default `false`)
   + `req_ctimeout` - connection timeout for the requests (default `10`)
     + this is the timeout for the connection to be established, not the timeout
   for the whole request & reply
@@ -56,7 +54,7 @@ Configurable features:
   + `req_limit` - limit number of successful requests per `req_time_range`
   time period (default `nil`)
   + `req_time_range` - set requests limit time period in seconds
-  + `resolve_mode` - override resolving mode (new in __0.0.9__, default `:ipv4`)
+  + `resolve_mode` - override resolving mode (default `:ipv4`)
     + possible options: `:auto`, `:ipv4`, `:ipv6`
     + `curl` default `:auto` may generate frequent
   `Curl::Err::HostResolutionError` errors for ipv4 only machine therefore
@@ -66,7 +64,7 @@ Configurable features:
 
   + `user_agent`
   + `user_agent=`
-    + get/set currently configured instance `user_agent` (new in __0.1.8__)
+    + get/set currently configured instance `user_agent`
   + `http_auth`
   + `http_auth=`
     + get/set default authentication credentials (`nil` clears the settings)
@@ -75,26 +73,25 @@ Configurable features:
 
 Available request methods:
 
-  + `head` (new in __0.1.1__)
+  + `head`
   + `get`
   + `post`
-  + `put` (new in __0.1.1__)
-  + `delete` (new in __0.1.1__)
+  + `put`
+  + `delete`
 
-These methods return arrays:
+Request methods return hash with following keys/values:
 
-  + in case of error return `[nil, error_message, last_url, time]`
-  + `[content_type, content, last_url, time]` otherwise
-    + `content_type` is appropriate response HTTP header value
-      + empty string in case of missing `Content-Type` header (new in __0.1.5__)
-    + `content`
-      + for `head` method it is the header decoded to hash (decoded
-  in the same way as `headers` method)
-      + otherwise it is response body recoded to `UTF-8` encoding for the most
-  cases: for more information refer to description in `Curburger::Recode#recode`
-    + `last_url` is last effective URL  of the request - to recognize
-  redirections (new in __0.0.6__)
-    + `time` is request processing time formatted to `%.6f` seconds
+  + `:content` - content of the response
+    + header hash for `head` request (decoded by `headers` method)
+    + recoded to UTF-8 if original encoding is successfully guessed,
+    byte encoded original otherwise
+    (for more info refer to `Curburger::Recode.recode`)
+  + `:ctype` - appropriate response HTTP header value (empty string if missing)
+  + `:last_url` - last effective url of the request (to recognize redirections)
+  + `:attempts` - count of spent request attempts
+  + `:responses` - array `[[status, time]]` of all attempts
+  + `:time` - total processing time rounded to 6 decimal places
+  + `:error` - defined only in case of error: the last error is stored here
 
 #### Reqeust options:
 
@@ -103,23 +100,18 @@ Request methods support following optional parameters:
   + `user`
   + `password` - credentials for basic HTTP authentication
   (override instance `http_auth` for this request, default `nil`)
-  + `follow_loc` - redefine instance `follow_loc` for this request (new in
-  __0.1.1__)
-  + `verify_ssl` - redefine instance `verify_ssl` for this request (new in
-  __0.1.6__)
-  + `retry_45` - redefine instance `retry_45` for this request (new in
-  __0.1.7__)
+  + `follow_loc` - redefine instance `follow_loc` for this request
+  + `verify_ssl` - redefine instance `verify_ssl` for this request
+  + `retry_45` - redefine instance `retry_45` for this request
   + `ctimeout` - redefine instance `req_ctimeout` for this request
   + `timeout` - redefine instance `req_timeout` for this request
   + `attempts` - redefine instance `req_attempts` for this request
   + `retry_wait` - redefine instance `req_retry_wait` for this request
   + `encoding` - force encoding for the response body (default `nil`)
-  + `force_ignore` - use `UTF-8//IGNORE` target encoding in iconv (new in
-  __0.0.5__, default `false`)
-  + `cookies` - set additional cookies for the request (new in __0.1.2__,
-  default `nil`)
-  + `headers` - add custom HTTP headers to the request (new in __0.1.0__,
-  default `{}`)
+  + `force_ignore` - use `UTF-8//IGNORE` target encoding in iconv
+  (default `false`)
+  + `cookies` - set additional cookies for the request ( default `nil`)
+  + `headers` - add custom HTTP headers to the request ( default `{}`)
   + optional _block_ given:
     + relevant only in case of enabled request per time period limitation
     + request method yields to execute the block before sleeping if the
@@ -147,13 +139,11 @@ Request methods support following optional parameters:
   `{:param1=>'value1', 'param2'=>'value2'}`
   + optional `content_type` option overrides default
   `application/x-www-form-urlencoded` Content-Type HTTP POST header
-  (new in __0.0.4__)
-  + the optional `data` parameter in DELETE request is new in __0.1.4__
 
 #### Headers:
 
 To obtain headers of the last reply parsed into `Hash` use `headers`
-instance method (new in __0.0.7__):
+instance method
 
     headers = c.headers
 
@@ -162,6 +152,7 @@ instance method (new in __0.0.7__):
 
 ## Changelog:
 
++ __0.2.0__: request methods return hash
 + __0.1.8__: `user_agent` and `user_agent=` get/set methods
 + __0.1.7__: instance/request `retry_45` options
 + __0.1.6__: instance/request `verify_ssl` options

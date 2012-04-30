@@ -87,7 +87,7 @@ module Curburger
 
 		def head url, opts={}, &block
 			rslt = request :head, url, @http_auth.merge(opts), block
-			rslt[1] = self.class.parse_headers rslt[1]
+			rslt[:content] = self.class.parse_headers rslt[:content]
 			rslt
 		end
 
