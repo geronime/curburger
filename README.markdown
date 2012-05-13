@@ -162,6 +162,7 @@ instance method (new in __0.0.7__):
 
 ## Changelog:
 
++ __0.1.9__: rescue 'ArgumentError: unknown encoding name' in Curburger::Recode
 + __0.1.8__: `user_agent` and `user_agent=` get/set methods
 + __0.1.7__: instance/request `retry_45` options
 + __0.1.6__: instance/request `verify_ssl` options

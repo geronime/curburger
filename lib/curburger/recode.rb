@@ -62,14 +62,22 @@ module Curburger
 							enc = nil                                       # fall back to 2e)
 						end
 					else
-						content.force_encoding enc
-						unless content.valid_encoding?
+						begin
+							content.force_encoding enc
+							unless content.valid_encoding?
+								if !logging || GLogg.log_w?
+									msg = 'Curburger::Recode#recode: ' +
+											"Detected encoding '#{enc}' invalid!"
+									logging ? GLogg.log_w(msg) : warn(msg)
+								end
+								enc = nil                                     # fall back to 2e)
+							end
+						rescue ArgumentError => e # Invalid encoding
 							if !logging || GLogg.log_w?
 								msg = 'Curburger::Recode#recode: ' +
-										"Detected encoding '#{enc}' invalid!"
+										"Detected encoding '#{enc}' invalid: #{e}!"
 								logging ? GLogg.log_w(msg) : warn(msg)
 							end
-							enc = nil                                       # fall back to 2e)
 						end
 					end
 				end
