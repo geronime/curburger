@@ -13,6 +13,7 @@ module Curburger
 		#   follow_loc   - redefine Curburger::Client instance @follow_loc
 		#   verify_ssl   - redefine Curburger::Client instance @verify_ssl
 		#   retry_45     - redefine Curburger::Client instance @retry_45
+		#   ignore_kill  - redefine Curburger::Client instance @ignore_kill
 		#   ctimeout     - redefine Curburger::Client instance @req_ctimeout
 		#   timeout      - redefine Curburger::Client instance @req_timeout
 		#   attempts     - redefine Curburger::Client instance @req_attempts
@@ -40,28 +41,12 @@ module Curburger
 			t0, m, attempt, chain = Time.now, method.downcase.to_sym, 0, []
 			opts = self.class.hash_keys_to_sym opts
 			opts[:data] = data_to_s opts[:data]
-			opts[:retry_45] = @retry_45 if opts[:retry_45].nil?
-			@curb.url = url
-			@curb.cookies = nil # reset additional cookies
-			@curb.cookies = opts[:cookies] \
-				if opts[:cookies] && opts[:cookies].kind_of?(String)
-			@curb.headers = {} # reset additional request headers
-			@curb.headers = opts[:headers] \
-				if opts[:headers] && opts[:headers].kind_of?(Hash)
-			@curb.headers['Content-Type'] = opts[:content_type] \
-				if opts[:content_type] && [:put, :post, :delete].include?(m)
-			@curb.http_auth_types = nil # reset authentication data
-			@curb.http_auth_types, @curb.username, @curb.password =
-				:basic, *opts.values_at(:user, :password) if opts[:user]
-			@curb.follow_location =
-				opts[:follow_loc].nil? ? @follow_loc : opts[:follow_loc]
-			@curb.ssl_verify_host = opts[:verify_ssl].nil? ?
-					@verify_ssl : opts[:verify_ssl] ? true : false
-			@curb.ssl_verify_peer = @curb.ssl_verify_host
-			@curb.connect_timeout = opts[:ctimeout] ? opts[:ctimeout] : @req_ctimeout
-			@curb.timeout = opts[:timeout] ? opts[:timeout] : @req_timeout
-			opts[:attempts]   = @req_attempts   unless opts[:attempts]
-			opts[:retry_wait] = @req_retry_wait unless opts[:req_retry_wait]
+			opts[:retry_45]    = @retry_45       if opts[:retry_45].nil?
+			opts[:ignore_kill] = @ignore_kill    if opts[:ignore_kill].nil?
+			opts[:attempts]    = @req_attempts   unless opts[:attempts]
+			opts[:retry_wait]  = @req_retry_wait unless opts[:req_retry_wait]
+			initialize_curl unless @curb
+			initialize_request url, opts
 			while attempt < opts[:attempts]
 				attempt += 1
 				req_limit_check block if @reqs # request limitation enabled
@@ -99,11 +84,34 @@ module Curburger
 						:responses => chain,
 						:time      => (Time.now - t0).round(6),
 					})
+				rescue interrupt_exception => e
+				  # method defined below to recognize exception based on message as well
+					log? && GLogg.log_d3? && GLogg.log_d3(sprintf(
+							'Curburger::Request#request:' +
+							"\n    %s %s\n    %s attempt %u/%u: %s - %s", m.to_s.upcase, url,
+							opts[:ignore_kill] ? 'Retrying interrupted' : 'Aborting',
+							attempt, opts[:attempts], e.class, e.message))
+					if opts[:ignore_kill] # reinitialize @curb and retry
+						attempt -= 1 # decrease both counters
+						@reqs[:cnt] -= 1 if @reqs
+						initialize_curl              # reinitialize @curl instance
+						initialize_request url, opts # reinitialize @curl req. options
+						redo
+					else # abort
+						chain.push(['Interrupted!', (Time.now - t).round(6)])
+						@curl = nil
+						return {
+							:attempts  => attempt,
+							:responses => chain,
+							:time      => (Time.now - t0).round(6),
+							:error     => chain[-1][0],
+						}
+					end
 				rescue Exception => e
 					log? && GLogg.log_i? && GLogg.log_i(sprintf(
 							'Curburger::Request#request:' +
-							"\n    %s %s\n    Attempt %u/%u failed: %s",
-							m.to_s.upcase, url, attempt, opts[:attempts], e.message))
+							"\n    %s %s\n    Attempt %u/%u failed: %s - %s",
+							m.to_s.upcase, url, attempt, opts[:attempts], e.class, e.message))
 					chain.push([e.message, (Time.now - t).round(6)])
 					break if !opts[:retry_45] &&
 							@curb.response_code >= 400 && @curb.response_code < 600
@@ -128,6 +136,53 @@ module Curburger
 				:time      => (Time.now - t0).round(6),
 				:error     => chain[-1][0],
 			})
+		end
+
+		def data_to_s data
+			if data.nil? || data.kind_of?(String)
+				data
+			elsif data.kind_of? Hash
+				a = []
+				data.each_pair{|k, v|
+					a.push "#{@curb.escape k.to_s}=#{@curb.escape v.to_s}" }
+				a.join '&'
+			else
+				throw "Unsupported data format: #{data.class} !"
+			end
+		end
+
+		def initialize_request url, opts
+			@curb.url = url
+			@curb.cookies = nil # reset additional cookies
+			@curb.cookies = opts[:cookies] \
+				if opts[:cookies] && opts[:cookies].kind_of?(String)
+			@curb.headers = {} # reset additional request headers
+			@curb.headers = opts[:headers] \
+				if opts[:headers] && opts[:headers].kind_of?(Hash)
+			@curb.headers['Content-Type'] = opts[:content_type] \
+				if opts[:content_type] && [:put, :post, :delete].include?(m)
+			@curb.http_auth_types = nil # reset authentication data
+			@curb.http_auth_types, @curb.username, @curb.password =
+				:basic, *opts.values_at(:user, :password) if opts[:user]
+			@curb.follow_location =
+				opts[:follow_loc].nil? ? @follow_loc : opts[:follow_loc]
+			@curb.ssl_verify_host = opts[:verify_ssl].nil? ?
+					@verify_ssl : opts[:verify_ssl] ? true : false
+			@curb.ssl_verify_peer = @curb.ssl_verify_host
+			@curb.connect_timeout = opts[:ctimeout] ? opts[:ctimeout] : @req_ctimeout
+			@curb.timeout = opts[:timeout] ? opts[:timeout] : @req_timeout
+		end
+
+		# method to determine interrupt exception(s) for rescue
+		# thanks to http://exceptionalruby.com/exceptional-ruby-sample.pdf (page 34)
+		def interrupt_exception
+			m = Module.new
+			(class << m; self; end).instance_eval do
+				define_method(:===){|e|
+					e.message =~ /interrupt/i || e.class == Curl::Err::MultiBadEasyHandle
+				}
+			end
+			m
 		end
 
 		# return {ctype => <content_type>, :content => <recoded_content>}
@@ -169,19 +224,6 @@ module Curburger
 						'Curburger::Request#req_limit_check: Resetting counter ' +        #_
 						'(%u/%u requests done).', @reqs[:cnt], @req_limit))               #_
 				@reqs[:cnt], @reqs[:next_check] = 0, Time.now + @req_time_range
-			end
-		end
-
-		def data_to_s data
-			if data.nil? || data.kind_of?(String)
-				data
-			elsif data.kind_of? Hash
-				a = []
-				data.each_pair{|k, v|
-					a.push "#{@curb.escape k.to_s}=#{@curb.escape v.to_s}" }
-				a.join '&'
-			else
-				throw "Unsupported data format: #{data.class} !"
 			end
 		end
 
