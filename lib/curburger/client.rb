@@ -20,6 +20,18 @@ module Curburger
 		#   follow_loc     - follow Location in HTTP response header (true)
 		#   verify_ssl     - whether to check SSL certificates (true)
 		#   retry_45       - retry 4XX and 5XX erros (false)
+		#   ignore_kill    - how to handle exceptions based on signaling
+		#                    - first the error with pattern /interrupt/i, next
+		#                      Curl::Err::MultiBadEasyHandle: Invalid easy handle
+		#                    - previous version just retried them as the exception
+		#                      was handled generally in Request#request method;
+		#                      unsuccessfully because of "Invalid easy handle"
+		#                    - currently the interruption exception is recognized
+		#                      and handled, the value of this option determines
+		#                      the behaviour:
+		#                      - false (default) - do not retry and abort
+		#                        (fill return hash with :error set)
+		#                      - true - ignore and retry (reinitialize @curb first)
 		#   req_ctimeout   - connection timeout for the requests (REQ_CONN_TOUT)
 		#                    - this is the timeout for the connection to be made,
 		#                      not the timeout for the whole request and reply)
@@ -36,10 +48,11 @@ module Curburger
 		#                    for ipv4 only machine. Curburger uses :ipv4 default.
 		def initialize o={}
 			o = self.class.hash_keys_to_sym o
-			@glogging   = o[:logging].nil?    ? true  : o[:logging]    ? true : false
-			@follow_loc = o[:follow_loc].nil? ? true  : o[:follow_loc] ? true : false
-			@verify_ssl = o[:verify_ssl].nil? ? true  : o[:verify_ssl] ? true : false
-			@retry_45   = o[:retry_45].nil?   ? false : o[:retry_45]   ? true : false
+			@glogging    = o[:logging].nil?     ? true  : o[:logging]     ? true : false
+			@follow_loc  = o[:follow_loc].nil?  ? true  : o[:follow_loc]  ? true : false
+			@verify_ssl  = o[:verify_ssl].nil?  ? true  : o[:verify_ssl]  ? true : false
+			@retry_45    = o[:retry_45].nil?    ? false : o[:retry_45]    ? true : false
+			@ignore_kill = o[:ignore_kill].nil? ? false : o[:ignore_kill] ? true : false
 			@req_ctimeout   = o[:req_ctimeout] ? o[:req_ctimeout].to_i : REQ_CONN_TOUT
 			@req_timeout    = o[:req_timeout]  ? o[:req_timeout].to_i  : REQ_TOUT
 			@req_attempts   = o[:req_attempts] ? o[:req_attempts].to_i : REQ_ATTEMPTS
@@ -52,11 +65,11 @@ module Curburger
 				@reqs = nil # initialize variable to avoid warnings
 			end
 			self.http_auth = o[:http_auth]
-			@curb = Curl::Easy.new
-			@curb.useragent = o[:user_agent] if o[:user_agent]
-			@curb.proxy_url = o[:http_proxy] if o[:http_proxy]
-			@curb.enable_cookies = true if o[:cookies]
-			@curb.resolve_mode = o[:resolve_mode] || :ipv4
+			@curb_opts = o.keep_if{|k, v|
+			  # record options set in @curb instance for use with initialize_curl
+				[:user_agent,:http_proxy,:cookies,:resolve_mode].include? k
+			}
+			initialize_curl
 		end
 
 		def user_agent
@@ -130,6 +143,14 @@ module Curburger
 		REQ_TOUT       = 20
 		REQ_ATTEMPTS   = 3
 		REQ_RETRY_WAIT = 0 # disabled
+
+		def initialize_curl
+			@curb = Curl::Easy.new
+			@curb.useragent = @curb_opts[:user_agent] if @curb_opts[:user_agent]
+			@curb.proxy_url = @curb_opts[:http_proxy] if @curb_opts[:http_proxy]
+			@curb.enable_cookies = true if @curb_opts[:cookies]
+			@curb.resolve_mode = @curb_opts[:resolve_mode] || :ipv4
+		end
 
 		extend  Curburger::Headers
 		extend  Curburger::Recode
