@@ -181,6 +181,7 @@ instance method (new in __0.0.7__):
 
 ## Changelog:
 
++ __0.1.11__: hide iconv deprecation warning
 + __0.1.10__: instance/request `ignore_kill` options
 + __0.1.9__: rescue 'ArgumentError: unknown encoding name' in Curburger::Recode
 + __0.1.8__: `user_agent` and `user_agent=` get/set methods
