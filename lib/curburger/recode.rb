@@ -1,5 +1,9 @@
 #encoding:utf-8
+
+### TODO not to use Iconv. Hiding the deprecation warning for now.
+v, $-v = $-v, nil
 require 'iconv'
+$-v = v
 
 module Curburger
 

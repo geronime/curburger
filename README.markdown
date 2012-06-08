@@ -168,6 +168,7 @@ instance method
 
 ## Changelog:
 
++ __0.2.3__: hide iconv deprecation warning
 + __0.2.2__: instance/request `ignore_kill` options
 + __0.2.1__: rescue 'ArgumentError: unknown encoding name' in Curburger::Recode
 + __0.2.0__: request methods return hash
