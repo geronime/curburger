@@ -159,8 +159,7 @@ module Curburger
 			@curb.headers = {} # reset additional request headers
 			@curb.headers = opts[:headers] \
 				if opts[:headers] && opts[:headers].kind_of?(Hash)
-			@curb.headers['Content-Type'] = opts[:content_type] \
-				if opts[:content_type] && [:put, :post, :delete].include?(m)
+			@curb.headers['Content-Type'] = opts[:content_type] if opts[:content_type]
 			@curb.http_auth_types = nil # reset authentication data
 			@curb.http_auth_types, @curb.username, @curb.password =
 				:basic, *opts.values_at(:user, :password) if opts[:user]
