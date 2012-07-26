@@ -141,7 +141,10 @@ module Curburger
 			@curb.cookies = nil # reset additional cookies
 			@curb.cookies = opts[:cookies] \
 				if opts[:cookies] && opts[:cookies].kind_of?(String)
-			@curb.headers = {} # reset additional request headers
+			# reset additional request headers,
+			# also remove 'Expect' HTTP header (always can be set by :headers option)
+			#   e.g. because of http://redmine.lighttpd.net/issues/1017
+			@curb.headers = {'Expect' => nil}
 			@curb.headers = opts[:headers] \
 				if opts[:headers] && opts[:headers].kind_of?(Hash)
 			@curb.headers['Content-Type'] = opts[:content_type] if opts[:content_type]

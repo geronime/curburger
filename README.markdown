@@ -181,6 +181,7 @@ instance method (new in __0.0.7__):
 
 ## Changelog:
 
++ __0.1.12__: removal of 'Expect' HTTP header by default
 + __0.1.11__: hide iconv deprecation warning
 + __0.1.10__: instance/request `ignore_kill` options
 + __0.1.9__: rescue 'ArgumentError: unknown encoding name' in Curburger::Recode
