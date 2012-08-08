@@ -136,6 +136,12 @@ module Curburger
 				self.class.parse_headers(@curb.header_str) # recode failed
 		end
 
+		# reset the curl instance - cookies are lost!
+		def reset
+			@curb = nil
+			initialize_curl
+		end
+
 		private
 
 		# default connection timeout, request timeout, attempt count, and retry wait
