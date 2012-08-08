@@ -179,8 +179,16 @@ instance method (new in __0.0.7__):
   + the first line (status line) is stored in `Status` key of the returned `Hash`
   + multivalue headers are stored in an `Array`
 
+#### Reset:
+
+To reinitialize `curl` instance (cookies are flushed as well)
+- new in __0.1.13__:
+
+    c.reset
+
 ## Changelog:
 
++ __0.1.13__: `reset` method (reinitialize `curl` instance)
 + __0.1.12__: removal of 'Expect' HTTP header by default
 + __0.1.11__: hide iconv deprecation warning
 + __0.1.10__: instance/request `ignore_kill` options
