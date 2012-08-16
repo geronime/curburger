@@ -18,12 +18,13 @@ module Curburger
 		#   timeout      - redefine Curburger::Client instance @req_timeout
 		#   attempts     - redefine Curburger::Client instance @req_attempts
 		#   retry_wait   - redefine Curburger::Client instance @req_retry_wait
+		#   norecode     - redefine Curburger::Client instance @req_norecode
 		#   encoding     - force encoding for the fetched page (nil)
 		#   force_ignore - use 'UTF-8//IGNORE' target encoding in iconv (false)
 		#   cookies      - set custom additional cookies (string, default nil)
 		#   headers      - add custom HTTP headers (empty hash)
 		#   data         - data to be sent in the request (nil)
-		#   content_type - specify custom content-type for POST/PUT request only
+		#   content_type - specify custom content-type
 		# In case of enabled request per time frame limitation the method yields to
 		# execute the optional block before sleeping if the @req_limit was reached.
 		# Return value is always hash with following keys/values:
@@ -43,6 +44,7 @@ module Curburger
 			opts[:data] = data_to_s opts[:data]
 			opts[:retry_45]    = @retry_45       if opts[:retry_45].nil?
 			opts[:ignore_kill] = @ignore_kill    if opts[:ignore_kill].nil?
+			opts[:norecode]    = @req_norecode   if opts[:norecode].nil?
 			opts[:attempts]    = @req_attempts   unless opts[:attempts]
 			opts[:retry_wait]  = @req_retry_wait unless opts[:req_retry_wait]
 			initialize_curl unless @curb
@@ -58,12 +60,13 @@ module Curburger
 						when :post   then
 							@curb.http_post opts[:data]
 						when :put    then
-							@curb.http_put opts[:data]
+							@curb.http_put  opts[:data]
 						when :delete then
-							@curb.post_body = opts[:data]
+							@curb.post_body = opts[:data] if opts[:data]
 							@curb.http_delete
 						else # GET
-							@curb.http_get
+							@curb.post_body = opts[:data] if opts[:data]
+							@curb.http(:GET)
 					end
 					unless ['20', '30'].include? @curb.response_code.to_s[0,2]
 						status = $1 if @curb.header_str.match(%r{ ([45]\d{2} .*)\r\n})
@@ -194,8 +197,10 @@ module Curburger
 				content = @curb.header_str
 			else
 				content = @curb.body_str
-				self.class.recode(log?, ctype, content,
+				unless opts[:norecode]
+					self.class.recode(log?, ctype, content,
 						*opts.values_at(:force_ignore, :encoding))
+				end
 			end
 			{:content => content, :ctype => ctype}
 		end

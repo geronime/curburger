@@ -66,6 +66,7 @@ Configurable features:
   + `req_retry_wait` - maximal count of seconds to sleep before retrying
     failed request (defalut `0`, disabled)
     + e.g. `10` = sleep random 1-10 seconds before retrying failed request
+  + `req_norecode` - do not recode request results (default `false`)
   + `req_limit` - limit number of successful requests per `req_time_range`
     time period (default `nil`)
   + `req_time_range` - set requests limit time period in seconds
@@ -123,6 +124,7 @@ Request methods support following optional parameters:
   + `timeout` - redefine instance `req_timeout` for this request
   + `attempts` - redefine instance `req_attempts` for this request
   + `retry_wait` - redefine instance `req_retry_wait` for this request
+  + `norecode` - redefine instance `req_norecode` for this request
   + `encoding` - force encoding for the response body (default `nil`)
   + `force_ignore` - use `UTF-8//IGNORE` target encoding in iconv
      (default `false`)
@@ -140,6 +142,10 @@ Request methods support following optional parameters:
 #### GET
 
     result = c.get(url, {opts}) { optional block ... }
+
+  + since __0.2.6__ the data can be posted in GET request using `opts[:data]`
+    + `opts[:data]` is the same as `data` for POST/PUT/DELETE described below
+    + optional `content_type` option can be used as well
 
 #### POST, PUT, DELETE
 
@@ -174,6 +180,7 @@ To reinitialize `curl` instance (cookies are flushed as well):
 
 ## Changelog:
 
++ __0.2.6__: instance/request `norecode` options, GET payload
 + __0.2.5__: `reset` method (reinitialize `curl` instance)
 + __0.2.4__: removal of 'Expect' HTTP header by default
 + __0.2.3__: hide iconv deprecation warning
