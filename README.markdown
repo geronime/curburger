@@ -129,6 +129,8 @@ Request methods support following optional parameters:
   + `force_ignore` - use `UTF-8//IGNORE` target encoding in iconv
      (default `false`)
   + `cookies` - set additional cookies for the request ( default `nil`)
+    + these are just passed to curl instance, therefore string in format
+      `"name1=content1; name2=content;"`
   + `headers` - add custom HTTP headers to the request ( default `{}`)
   + optional _block_ given:
     + relevant only in case of enabled request per time period limitation
