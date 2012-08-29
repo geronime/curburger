@@ -141,6 +141,8 @@ Request methods support following optional parameters:
     __0.0.5__, default `false`)
   + `cookies` - set additional cookies for the request (new in __0.1.2__,
     default `nil`)
+    + these are just passed to curl instance, therefore string in format
+      `"name1=content1; name2=content;"`
   + `headers` - add custom HTTP headers to the request (new in __0.1.0__,
     default `{}`)
   + optional _block_ given:
