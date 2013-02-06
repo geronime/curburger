@@ -21,7 +21,7 @@ Gem::Specification.new do |s|
 	s.require_paths = ['lib']
 
 	s.add_dependency 'glogg'
-	s.add_dependency 'curb', '~> 0.7.0'
+	s.add_dependency 'curb', '~> 0.8.0'
 
 end
 

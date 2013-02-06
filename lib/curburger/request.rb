@@ -57,11 +57,12 @@ module Curburger
 						when :put    then
 							@curb.http_put  opts[:data]
 						when :delete then
-							@curb.post_body = opts[:data] if opts[:data]
+							@curb.post_body = opts[:data]
 							@curb.http_delete
 						else # GET
-							@curb.post_body = opts[:data] if opts[:data]
-							@curb.http(:GET)
+							@curb.post_body = opts[:data]
+							opts[:data] ? @curb.http(:GET) : @curb.http_get
+							  # workaround for https://github.com/taf2/curb/issues/133
 					end
 					unless ['20', '30'].include? @curb.response_code.to_s[0,2]
 						status = $1 if @curb.header_str.match(%r{ ([45]\d{2} .*)\r\n})
