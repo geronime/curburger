@@ -182,6 +182,7 @@ To reinitialize `curl` instance (cookies are flushed as well):
 
 ## Changelog:
 
++ __0.2.7__: bugfix, curb 0.8 required in gemspec
 + __0.2.6__: instance/request `norecode` options, GET payload
 + __0.2.5__: `reset` method (reinitialize `curl` instance)
 + __0.2.4__: removal of 'Expect' HTTP header by default
