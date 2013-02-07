@@ -40,6 +40,8 @@ module Curburger
 		#   req_retry_wait - specify random upper bound to sleep between retrying
 		#                    failed request (default 0 = disabled)
 		#   req_norecode   - do not recode request results (false)
+		#   req_enc_ignore_illegal - ignore illegal bytes
+		#                            during request result recode (false)
 		#   req_limit      - limit number of successful requests per req_time_range
 		#                    time period (nil)
 		#   req_time_range - set request limit time period in seconds
@@ -61,6 +63,8 @@ module Curburger
 				o[:req_retry_wait] ? o[:req_retry_wait].to_i : REQ_RETRY_WAIT
 			@req_norecode   =
 				o[:req_norecode].nil? ? false : o[:req_norecode] ? true : false
+			@req_enc_ignore_illegal = o[:req_enc_ignore_illegal].nil? ? false :
+					o[:req_enc_ignore_illegal] ? true : false
 			if o[:req_limit] && o[:req_time_range] # enable request limitation
 				@req_limit, @req_time_range = o[:req_limit].to_i, o[:req_time_range].to_i
 				@reqs = {:cnt => 0, :next_check => Time.now + @req_time_range}

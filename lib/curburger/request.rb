@@ -20,7 +20,8 @@ module Curburger
 		#   retry_wait   - redefine Curburger::Client instance @req_retry_wait
 		#   norecode     - redefine Curburger::Client instance @req_norecode
 		#   encoding     - force encoding for the fetched page (nil)
-		#   force_ignore - use 'UTF-8//IGNORE' target encoding in iconv (false)
+		#   enc_ignore_illegal - redefine instance @req_enc_ignore_illegal
+		#                        (previously force_ignore option, still working)
 		#   cookies      - set custom additional cookies (string, default nil)
 		#   headers      - add custom HTTP headers (empty hash)
 		#   data         - data to be sent in the request (nil)
@@ -199,8 +200,13 @@ module Curburger
 			else
 				content = @curb.body_str
 				unless opts[:norecode]
-					self.class.recode(log?, ctype, content,
-						*opts.values_at(:force_ignore, :encoding))
+					force_ignore =
+						opts[:enc_ignore_illegal].nil? ?
+							opts[:force_ignore].nil? ?
+								@req_enc_ignore_illegal : # default
+								opts[:force_ignore] ? true : false :
+							opts[:enc_ignore_illegal] ? true : false
+					self.class.recode log?, ctype, content, force_ignore, opts[:encoding]
 				end
 			end
 			{:content => content, :ctype => ctype}

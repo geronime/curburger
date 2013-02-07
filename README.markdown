@@ -67,6 +67,8 @@ Configurable features:
     failed request (defalut `0`, disabled)
     + e.g. `10` = sleep random 1-10 seconds before retrying failed request
   + `req_norecode` - do not recode request results (default `false`)
+  + `req_enc_ignore_illegal` - ignore illegal bytes during request result recode
+    (default `false`)
   + `req_limit` - limit number of successful requests per `req_time_range`
     time period (default `nil`)
   + `req_time_range` - set requests limit time period in seconds
@@ -99,8 +101,8 @@ Request methods return hash with following keys/values:
 
   + `:content` - content of the response
     + header hash for `head` request (decoded by `headers` method)
-    + recoded to UTF-8 if original encoding is successfully guessed,
-      byte encoded original otherwise
+    + recoded to UTF-8 if original encoding is successfully guessed
+      and recoding went without error, byte encoded original otherwise
       (for more info refer to `Curburger::Recode.recode`)
   + `:ctype` - appropriate response HTTP header value (empty string if missing)
   + `:last_url` - last effective url of the request (to recognize redirections)
@@ -126,8 +128,9 @@ Request methods support following optional parameters:
   + `retry_wait` - redefine instance `req_retry_wait` for this request
   + `norecode` - redefine instance `req_norecode` for this request
   + `encoding` - force encoding for the response body (default `nil`)
-  + `force_ignore` - use `UTF-8//IGNORE` target encoding in iconv
-     (default `false`)
+  + `enc_ignore_illegal` - redefine instance `req_enc_ignore_illegal`
+     for this request
+    + `force_ignore` still working as alias for this parameter
   + `cookies` - set additional cookies for the request ( default `nil`)
     + these are just passed to curl instance, therefore string in format
       `"name1=content1; name2=content;"`
@@ -182,6 +185,8 @@ To reinitialize `curl` instance (cookies are flushed as well):
 
 ## Changelog:
 
++ __0.2.8__: migration from iconv to encode, `force_ignore` renamed to
+             `enc_ignore_illegal` with instance version of this parameter
 + __0.2.7__: bugfix, curb 0.8 required in gemspec
 + __0.2.6__: instance/request `norecode` options, GET payload
 + __0.2.5__: `reset` method (reinitialize `curl` instance)
